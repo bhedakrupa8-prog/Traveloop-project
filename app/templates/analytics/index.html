@@ -8,9 +8,9 @@
         <p class="text-muted mb-0">Insights and statistics across all your trips.</p>
     </div>
     <div>
-        <button class="btn btn-outline-primary rounded-pill px-4 fw-bold shadow-sm">
+        <a href="{{ url_for('analytics.export_report') }}" class="btn btn-outline-primary rounded-pill px-4 fw-bold shadow-sm">
             <i class="fa-solid fa-download me-2"></i> Export Report
-        </button>
+        </a>
     </div>
 </div>
 
@@ -18,7 +18,7 @@
 <div class="row g-4 mb-4">
     <!-- Total Trips -->
     <div class="col-md-4">
-        <div class="card border-0 shadow-sm p-4 h-100" style="border-radius: var(--border-radius);">
+        <div class="card border-0 shadow-sm p-4 h-100 card-hover" style="border-radius: var(--border-radius); border-left: 4px solid var(--primary);">
             <div class="d-flex align-items-center mb-3">
                 <div class="bg-primary bg-opacity-10 text-primary rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 48px; height: 48px;">
                     <i class="fa-solid fa-suitcase-rolling fs-5"></i>
@@ -28,12 +28,13 @@
                     <h3 class="fw-bold text-dark mb-0">{{ total_trips }}</h3>
                 </div>
             </div>
+            <p class="text-muted small mb-0 mt-2">All your planned adventures</p>
         </div>
     </div>
     
     <!-- Countries Visited -->
     <div class="col-md-4">
-        <div class="card border-0 shadow-sm p-4 h-100" style="border-radius: var(--border-radius);">
+        <div class="card border-0 shadow-sm p-4 h-100 card-hover" style="border-radius: var(--border-radius); border-left: 4px solid var(--success);">
             <div class="d-flex align-items-center mb-3">
                 <div class="bg-success bg-opacity-10 text-success rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 48px; height: 48px;">
                     <i class="fa-solid fa-earth-americas fs-5"></i>
@@ -43,21 +44,23 @@
                     <h3 class="fw-bold text-dark mb-0">{{ total_countries }}</h3>
                 </div>
             </div>
+            <p class="text-muted small mb-0 mt-2">Destinations explored worldwide</p>
         </div>
     </div>
     
     <!-- Total Expense -->
     <div class="col-md-4">
-        <div class="card border-0 shadow-sm p-4 h-100" style="border-radius: var(--border-radius);">
+        <div class="card border-0 shadow-sm p-4 h-100 card-hover" style="border-radius: var(--border-radius); border-left: 4px solid var(--danger);">
             <div class="d-flex align-items-center mb-3">
                 <div class="bg-danger bg-opacity-10 text-danger rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 48px; height: 48px;">
                     <i class="fa-solid fa-wallet fs-5"></i>
                 </div>
                 <div>
                     <h6 class="text-muted text-uppercase tracking-wider small fw-bold mb-0">Total Spent</h6>
-                    <h3 class="fw-bold text-dark mb-0">₹{{ "%.2f"|format(total_expense) }}</h3>
+                    <h3 class="fw-bold text-dark mb-0">₹{{ "{:,.0f}".format(total_expense) }}</h3>
                 </div>
             </div>
+            <p class="text-muted small mb-0 mt-2">Cumulative actual expenses</p>
         </div>
     </div>
 </div>
@@ -67,15 +70,21 @@
     <!-- Expense Breakdown Chart -->
     <div class="col-lg-6">
         <div class="card border-0 shadow-sm p-4 h-100" style="border-radius: var(--border-radius);">
-            <h5 class="fw-bold mb-4">Total Spending by Category</h5>
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h5 class="fw-bold mb-0">Total Spending by Category</h5>
+                <span class="badge bg-light text-dark border"><i class="fa-solid fa-indian-rupee-sign text-muted me-1"></i> INR</span>
+            </div>
             {% if total_expense > 0 %}
             <div style="height: 300px; position: relative;">
                 <canvas id="categoryExpenseChart"></canvas>
             </div>
             {% else %}
             <div class="text-center py-5 h-100 d-flex flex-column justify-content-center">
-                <i class="fa-solid fa-chart-pie fs-1 text-muted mb-3 opacity-25"></i>
-                <p class="text-muted fw-medium">No financial data yet.</p>
+                <div class="bg-light rounded-circle mx-auto d-flex align-items-center justify-content-center mb-3" style="width: 64px; height: 64px;">
+                    <i class="fa-solid fa-chart-pie fs-3 text-muted opacity-50"></i>
+                </div>
+                <p class="text-muted fw-medium mb-1">No financial data yet.</p>
+                <p class="small text-muted opacity-75">Start logging expenses to see your breakdown.</p>
             </div>
             {% endif %}
         </div>
@@ -84,15 +93,21 @@
     <!-- Trips per Month Chart -->
     <div class="col-lg-6">
         <div class="card border-0 shadow-sm p-4 h-100" style="border-radius: var(--border-radius);">
-            <h5 class="fw-bold mb-4">Trips per Month</h5>
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h5 class="fw-bold mb-0">Trips per Month</h5>
+                <span class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25"><i class="fa-solid fa-calendar text-primary me-1"></i> Timeline</span>
+            </div>
             {% if total_trips > 0 %}
             <div style="height: 300px; position: relative;">
                 <canvas id="tripsMonthChart"></canvas>
             </div>
             {% else %}
             <div class="text-center py-5 h-100 d-flex flex-column justify-content-center">
-                <i class="fa-solid fa-chart-bar fs-1 text-muted mb-3 opacity-25"></i>
-                <p class="text-muted fw-medium">No trip data yet.</p>
+                <div class="bg-light rounded-circle mx-auto d-flex align-items-center justify-content-center mb-3" style="width: 64px; height: 64px;">
+                    <i class="fa-solid fa-chart-bar fs-3 text-muted opacity-50"></i>
+                </div>
+                <p class="text-muted fw-medium mb-1">No trip data yet.</p>
+                <p class="small text-muted opacity-75">Plan your first trip to populate the timeline.</p>
             </div>
             {% endif %}
         </div>
@@ -100,76 +115,129 @@
 </div>
 
 <!-- Hidden data for JS charts -->
-<div id="chartData" 
-     data-cat-labels='{{ cat_labels|tojson|safe }}'
-     data-cat-data='{{ cat_data|tojson|safe }}'
-     data-month-labels='{{ month_labels|tojson|safe }}'
-     data-month-data='{{ month_data|tojson|safe }}'>
-</div>
+<script id="analytics-data" type="application/json">
+{
+    "catLabels": {{ cat_labels|tojson|safe }},
+    "catData": {{ cat_data|tojson|safe }},
+    "monthLabels": {{ month_labels|tojson|safe }},
+    "monthData": {{ month_data|tojson|safe }}
+}
+</script>
 {% endblock %}
 
 {% block extra_js %}
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        const dataContainer = document.getElementById('chartData');
+        const dataElement = document.getElementById('analytics-data');
+        if (!dataElement) return;
+        
+        const analyticsData = JSON.parse(dataElement.textContent);
+        
+        // Custom fonts
+        Chart.defaults.font.family = "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif";
+        Chart.defaults.color = '#6B7280';
         
         // 1. Category Expense Doughnut Chart
-        const catLabels = JSON.parse(dataContainer.dataset.catLabels);
-        const catData = JSON.parse(dataContainer.dataset.catData);
-        
-        if (catData.length > 0 && document.getElementById('categoryExpenseChart')) {
+        if (analyticsData.catData.length > 0 && document.getElementById('categoryExpenseChart')) {
             const ctxCat = document.getElementById('categoryExpenseChart').getContext('2d');
+            
             new Chart(ctxCat, {
                 type: 'doughnut',
                 data: {
-                    labels: catLabels,
+                    labels: analyticsData.catLabels,
                     datasets: [{
-                        data: catData,
+                        data: analyticsData.catData,
                         backgroundColor: [
-                            '#5B4CF0', '#10B981', '#F59E0B', '#EF4444', '#6B7280', '#3B82F6'
+                            '#5B4CF0', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899'
                         ],
-                        borderWidth: 0,
-                        hoverOffset: 4
+                        borderWidth: 3,
+                        borderColor: '#ffffff',
+                        hoverOffset: 8,
+                        borderRadius: 4
                     }]
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
+                    cutout: '70%',
                     plugins: {
-                        legend: { position: 'right' }
+                        legend: { 
+                            position: 'right',
+                            labels: {
+                                usePointStyle: true,
+                                padding: 20,
+                                font: { size: 13, weight: '500' }
+                            }
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(17, 24, 39, 0.9)',
+                            titleFont: { size: 14, weight: '600' },
+                            bodyFont: { size: 14 },
+                            padding: 12,
+                            cornerRadius: 8,
+                            callbacks: {
+                                label: function(context) {
+                                    let label = context.label || '';
+                                    if (label) { label += ': '; }
+                                    if (context.parsed !== null) {
+                                        label += new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(context.parsed);
+                                    }
+                                    return label;
+                                }
+                            }
+                        }
                     }
                 }
             });
         }
         
-        // 2. Trips Per Month Bar Chart
-        const monthLabels = JSON.parse(dataContainer.dataset.monthLabels);
-        const monthData = JSON.parse(dataContainer.dataset.monthData);
-        
-        if (monthData.length > 0 && document.getElementById('tripsMonthChart')) {
+        // 2. Trips Per Month Pie Chart
+        if (analyticsData.monthData.length > 0 && document.getElementById('tripsMonthChart')) {
             const ctxMonth = document.getElementById('tripsMonthChart').getContext('2d');
+            
             new Chart(ctxMonth, {
-                type: 'bar',
+                type: 'pie',
                 data: {
-                    labels: monthLabels,
+                    labels: analyticsData.monthLabels,
                     datasets: [{
-                        label: 'Trips',
-                        data: monthData,
-                        backgroundColor: '#5B4CF0',
-                        borderRadius: 6
+                        data: analyticsData.monthData,
+                        backgroundColor: [
+                            '#5B4CF0', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899', '#14B8A6', '#F43F5E'
+                        ],
+                        borderWidth: 3,
+                        borderColor: '#ffffff',
+                        hoverOffset: 8
                     }]
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            ticks: { stepSize: 1 }
-                        }
-                    },
                     plugins: {
-                        legend: { display: false }
+                        legend: { 
+                            position: 'right',
+                            labels: {
+                                usePointStyle: true,
+                                padding: 20,
+                                font: { size: 13, weight: '500' }
+                            }
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(17, 24, 39, 0.9)',
+                            titleFont: { size: 14, weight: '600' },
+                            bodyFont: { size: 14 },
+                            padding: 12,
+                            cornerRadius: 8,
+                            callbacks: {
+                                label: function(context) {
+                                    let label = context.label || '';
+                                    if (label) { label += ': '; }
+                                    if (context.parsed !== null) {
+                                        label += context.parsed + ' Trip' + (context.parsed > 1 ? 's' : '');
+                                    }
+                                    return label;
+                                }
+                            }
+                        }
                     }
                 }
             });

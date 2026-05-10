@@ -225,6 +225,22 @@ def toggle_packing_item(item_id):
     db.session.commit()
     return jsonify({"success": True, "is_packed": item.is_packed})
     
+@trips_bp.route('/api/packing/<int:item_id>', methods=['DELETE'])
+def delete_packing_item(item_id):
+    if 'user_id' not in session: return jsonify({"error": "Unauthorized"}), 401
+    item = PackingItem.query.get_or_404(item_id)
+    if item.trip.user_id != session['user_id']:
+        return jsonify({"error": "Unauthorized"}), 403
+        
+    try:
+        db.session.delete(item)
+        db.session.commit()
+        return jsonify({"success": True})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 400
+
+
 @trips_bp.route('/api/<int:trip_id>/budget', methods=['POST'])
 def add_budget(trip_id):
     if 'user_id' not in session: return jsonify({"error": "Unauthorized"}), 401

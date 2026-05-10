@@ -35,15 +35,20 @@ def index():
     
     # 5. Trips per month (based on start date)
     months_data = {}
+    from datetime import datetime
     for trip in user_trips:
         if trip.start_date:
-            m = trip.start_date.strftime("%Y-%m")
-            months_data[m] = months_data.get(m, 0) + 1
+            # use a tuple to sort properly, or just format
+            m_key = trip.start_date.strftime("%Y-%m")
+            m_label = trip.start_date.strftime("%b %Y")
+            if m_key not in months_data:
+                months_data[m_key] = {'label': m_label, 'count': 0}
+            months_data[m_key]['count'] += 1
             
-    # Sort months
+    # Sort months chronologically by the YYYY-MM key
     sorted_months = sorted(months_data.keys())
-    month_labels = sorted_months
-    month_data = [months_data[m] for m in sorted_months]
+    month_labels = [months_data[m]['label'] for m in sorted_months]
+    month_data = [months_data[m]['count'] for m in sorted_months]
     
     return render_template(
         'analytics/index.html',
@@ -55,3 +60,40 @@ def index():
         month_labels=month_labels,
         month_data=month_data
     )
+
+import csv
+from io import StringIO
+from flask import Response
+
+@analytics_bp.route('/export', methods=['GET'])
+def export_report():
+    if 'user_id' not in session:
+        return redirect(url_for('auth.login'))
+        
+    user_id = session['user_id']
+    user_trips = Trip.query.filter_by(user_id=user_id).all()
+    
+    si = StringIO()
+    cw = csv.writer(si)
+    cw.writerow(['Trip Name', 'Start Date', 'End Date', 'Type', 'Status', 'Total Estimated Budget', 'Total Actual Expense'])
+    
+    for trip in user_trips:
+        est_budget = sum(b.estimated_cost for b in trip.budgets) if trip.budgets else 0
+        act_budget = sum(b.actual_cost for b in trip.budgets) if trip.budgets else 0
+        cw.writerow([
+            trip.name, 
+            trip.start_date.strftime('%Y-%m-%d') if trip.start_date else '', 
+            trip.end_date.strftime('%Y-%m-%d') if trip.end_date else '', 
+            trip.trip_type,
+            trip.status,
+            est_budget,
+            act_budget
+        ])
+        
+    output = si.getvalue()
+    return Response(
+        output,
+        mimetype="text/csv",
+        headers={"Content-Disposition": "attachment;filename=traveloop_analytics_report.csv"}
+    )
+

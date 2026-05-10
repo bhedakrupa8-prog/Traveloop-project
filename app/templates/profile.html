@@ -11,11 +11,14 @@
     <div class="col-lg-4">
         <!-- Profile Card -->
         <div class="card border-0 shadow-sm p-4 text-center h-100" style="border-radius: var(--border-radius);">
-            <div class="position-relative mx-auto mb-4 mt-2">
-                <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center fw-bold shadow-sm mx-auto" style="width: 100px; height: 100px; font-size: 2.5rem;">
-                    {{ user.username[0]|upper }}
+            <div class="position-relative mx-auto mb-4 mt-2" style="width: 100px;">
+                <div id="profile-avatar-display" class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center fw-bold shadow-sm mx-auto" style="width: 100px; height: 100px; font-size: 2.5rem; background-size: cover; background-position: center;">
+                    <span id="profile-initial">{{ user.username[0]|upper }}</span>
                 </div>
-                <button class="btn btn-sm btn-light border position-absolute bottom-0 end-0 rounded-circle shadow-sm" style="width: 32px; height: 32px;"><i class="fa-solid fa-camera"></i></button>
+                <label for="profile-upload" class="btn btn-sm btn-light border position-absolute bottom-0 end-0 rounded-circle shadow-sm m-0 d-flex align-items-center justify-content-center" style="width: 32px; height: 32px; cursor: pointer; padding: 0;">
+                    <i class="fa-solid fa-camera"></i>
+                </label>
+                <input type="file" id="profile-upload" class="d-none" accept="image/*">
             </div>
             <h4 class="fw-bold text-dark mb-1">{{ user.username }}</h4>
             <p class="text-muted">{{ user.email }}</p>
@@ -36,11 +39,11 @@
     <div class="col-lg-8">
         <div class="card border-0 shadow-sm p-4 mb-4" style="border-radius: var(--border-radius);">
             <h5 class="fw-bold text-dark mb-4">Personal Information</h5>
-            <form>
+            <form method="POST" action="{{ url_for('main.profile') }}">
                 <div class="row g-4 mb-4">
                     <div class="col-md-6">
                         <label class="form-label fw-bold text-dark small text-uppercase tracking-wider">Full Name</label>
-                        <input type="text" class="form-control bg-light" value="{{ user.username }}">
+                        <input type="text" name="username" class="form-control bg-light" value="{{ user.username }}">
                     </div>
                     <div class="col-md-6">
                         <label class="form-label fw-bold text-dark small text-uppercase tracking-wider">Email Address</label>
@@ -53,15 +56,20 @@
                     </div>
                     <div class="col-md-6">
                         <label class="form-label fw-bold text-dark small text-uppercase tracking-wider">Timezone</label>
-                        <select class="form-select bg-light">
+                        <select class="form-select bg-light" name="timezone">
+                            <option>UTC-08:00 Pacific Time (US & Canada)</option>
                             <option>UTC-05:00 Eastern Time (US & Canada)</option>
                             <option>UTC+00:00 London</option>
                             <option>UTC+01:00 Paris</option>
+                            <option selected>UTC+05:30 India Standard Time (IST)</option>
+                            <option>UTC+08:00 Singapore</option>
+                            <option>UTC+09:00 Tokyo</option>
+                            <option>UTC+10:00 Sydney</option>
                         </select>
                     </div>
                 </div>
                 <div class="d-flex justify-content-end">
-                    <button type="button" class="btn btn-primary rounded-pill px-4 shadow-sm fw-bold">Save Changes</button>
+                    <button type="submit" class="btn btn-primary rounded-pill px-4 shadow-sm fw-bold">Save Changes</button>
                 </div>
             </form>
         </div>
@@ -73,9 +81,58 @@
                     <h6 class="fw-bold text-danger mb-1">Delete Workspace & Account</h6>
                     <p class="text-danger opacity-75 small mb-0">Once you delete your account, there is no going back. Please be certain.</p>
                 </div>
-                <button class="btn btn-danger rounded-pill fw-bold shadow-sm px-4">Delete Account</button>
+                <button type="button" class="btn btn-danger rounded-pill fw-bold shadow-sm px-4" data-bs-toggle="modal" data-bs-target="#deleteAccountModal">Delete Account</button>
             </div>
         </div>
     </div>
 </div>
+
+<!-- Delete Account Modal -->
+<div class="modal fade" id="deleteAccountModal" tabindex="-1" aria-labelledby="deleteAccountModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg" style="border-radius: var(--border-radius);">
+            <div class="modal-header border-bottom-0 pb-0">
+                <h5 class="modal-title fw-bold text-danger" id="deleteAccountModalLabel"><i class="fa-solid fa-triangle-exclamation me-2"></i> Delete Account</h5>
+                <button type="button" class="btn-close shadow-none" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body py-4">
+                <p class="mb-0 text-dark fw-medium">Are you completely sure you want to delete your account?</p>
+                <p class="text-muted small mt-2 mb-0">This action cannot be undone. All your trips, itineraries, budget data, and packing lists will be permanently erased.</p>
+            </div>
+            <div class="modal-footer border-top-0 pt-0">
+                <button type="button" class="btn btn-light rounded-pill px-4 fw-medium" data-bs-dismiss="modal">Cancel</button>
+                <form method="POST" action="{{ url_for('main.delete_account') }}" class="m-0">
+                    <button type="submit" class="btn btn-danger rounded-pill px-4 fw-bold shadow-sm">Yes, Delete My Account</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const uploadInput = document.getElementById('profile-upload');
+        const display = document.getElementById('profile-avatar-display');
+        const initial = document.getElementById('profile-initial');
+
+        if(uploadInput) {
+            uploadInput.addEventListener('change', function(e) {
+                if (e.target.files && e.target.files[0]) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        // Set the new image as background
+                        display.style.backgroundImage = `url('${e.target.result}')`;
+                        
+                        // Hide the background color and the text initial
+                        display.classList.remove('bg-primary');
+                        if (initial) initial.style.display = 'none';
+                    }
+                    reader.readAsDataURL(e.target.files[0]);
+                }
+            });
+        }
+    });
+</script>
 {% endblock %}

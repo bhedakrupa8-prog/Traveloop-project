@@ -31,4 +31,37 @@ def create_app(config_class=Config):
     app.register_blueprint(analytics_bp, url_prefix='/analytics')
     app.register_blueprint(main_bp)
 
+    @app.context_processor
+    def inject_notifications():
+        from flask import session
+        notifications = []
+        if 'user_id' in session:
+            user_id = session['user_id']
+            from app.models.trip import Trip
+            from app.models.packing import PackingItem
+            from datetime import date
+            
+            # Check for upcoming trips within 7 days
+            upcoming_trips = Trip.query.filter(Trip.user_id==user_id, Trip.start_date >= date.today()).all()
+            for trip in upcoming_trips:
+                days_until = (trip.start_date - date.today()).days
+                if days_until <= 7:
+                    notifications.append({
+                        'type': 'primary',
+                        'icon': 'fa-plane-arrival',
+                        'message': f'Your trip to {trip.name} starts in {days_until} days!' if days_until > 0 else f'Your trip to {trip.name} starts today!',
+                        'time': 'Just now'
+                    })
+                    
+                    # Also check for unpacked items for this trip
+                    unpacked_count = PackingItem.query.filter_by(trip_id=trip.id, is_packed=False).count()
+                    if unpacked_count > 0:
+                        notifications.append({
+                            'type': 'warning',
+                            'icon': 'fa-triangle-exclamation',
+                            'message': f'You have {unpacked_count} unpacked item{"s" if unpacked_count > 1 else ""} for {trip.name}.',
+                            'time': 'Just now'
+                        })
+        return dict(notifications=notifications)
+
     return app

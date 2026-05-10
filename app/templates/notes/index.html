@@ -148,6 +148,48 @@
 {% endblock %}
 
 {% block content %}
+{% macro note_card(note) %}
+<div class="note-card" data-id="{{ note.id }}" data-title="{{ note.title }}" data-content="{{ note.content }}" data-trip="{{ note.trip_id or '' }}" data-type="{{ note.note_type }}" data-reminder="{{ note.reminder_date.strftime('%Y-%m-%d') if note.reminder_date else '' }}" data-pinned="{{ 'true' if note.is_pinned else 'false' }}" onclick="openEditFromCard(this)">
+    <div class="note-actions" onclick="event.stopPropagation()">
+        <button class="note-action-btn" title="Copy Note" onclick="copyNoteFromCard(this)">
+            <i class="fa-regular fa-copy"></i>
+        </button>
+        <button class="note-action-btn" title="Pin Note" onclick="togglePinFromCard(this)">
+            <i class="fa-solid fa-thumbtack {{ 'text-primary' if note.is_pinned else '' }}"></i>
+        </button>
+        <button class="note-action-btn text-danger" title="Delete Note" onclick="deleteNoteFromCard(this)">
+            <i class="fa-solid fa-trash"></i>
+        </button>
+    </div>
+    
+    <div class="d-flex align-items-center gap-2 mb-2">
+        {% set icon_class = 'fa-file-lines text-muted' %}
+        {% if note.note_type == 'Hotel' %}{% set icon_class = 'fa-bed icon-hotel' %}
+        {% elif note.note_type == 'Transport' %}{% set icon_class = 'fa-plane icon-transport' %}
+        {% elif note.note_type == 'Food' %}{% set icon_class = 'fa-utensils icon-food' %}
+        {% elif note.note_type == 'Emergency' %}{% set icon_class = 'fa-kit-medical icon-emergency' %}
+        {% elif note.note_type == 'Shopping' %}{% set icon_class = 'fa-bag-shopping icon-shopping' %}
+        {% elif note.note_type == 'Reminder' %}{% set icon_class = 'fa-bell icon-reminder' %}
+        {% endif %}
+        <i class="fa-solid {{ icon_class }}"></i>
+        <span class="badge bg-light text-dark border">{{ note.note_type }}</span>
+        {% if note.trip %}
+        <span class="badge bg-primary bg-opacity-10 text-primary">{{ note.trip.name }}</span>
+        {% endif %}
+    </div>
+    
+    <h5 class="note-title">{{ note.title }}</h5>
+    <p class="note-preview">{{ note.content | markdown | safe }}</p>
+    
+    <div class="note-meta justify-content-between">
+        <span><i class="fa-regular fa-clock me-1"></i> {{ note.updated_at.strftime('%b %d, %Y') }}</span>
+        {% if note.reminder_date %}
+        <span class="text-warning fw-bold"><i class="fa-regular fa-calendar-check me-1"></i> {{ note.reminder_date.strftime('%b %d') }}</span>
+        {% endif %}
+    </div>
+</div>
+{% endmacro %}
+
 <div class="d-flex justify-content-between align-items-center mb-4">
     <div>
         <h2 class="fw-bold text-dark mb-1">Notes Workspace</h2>
@@ -232,7 +274,7 @@
                 <i class="fa-regular fa-lightbulb fs-5"></i>
             </div>
             <h6 class="fw-bold text-primary mb-1">Pro Tip</h6>
-            <p class="text-primary opacity-75 small mb-0">Use **bold** and *italic* in your note content.</p>
+            <p class="text-primary opacity-75 small mb-0">Use <strong>bold</strong> and <em>italic</em> formatting to structure your notes.</p>
         </div>
     </div>
 
@@ -334,47 +376,7 @@
     </div>
 </div>
 
-{% macro note_card(note) %}
-<div class="note-card" data-id="{{ note.id }}" data-title="{{ note.title }}" data-content="{{ note.content }}" data-trip="{{ note.trip_id or '' }}" data-type="{{ note.note_type }}" data-reminder="{{ note.reminder_date.strftime('%Y-%m-%d') if note.reminder_date else '' }}" data-pinned="{{ 'true' if note.is_pinned else 'false' }}" onclick="openEditFromCard(this)">
-    <div class="note-actions" onclick="event.stopPropagation()">
-        <button class="note-action-btn" title="Copy Note" onclick="copyNoteFromCard(this)">
-            <i class="fa-regular fa-copy"></i>
-        </button>
-        <button class="note-action-btn" title="Pin Note" onclick="togglePinFromCard(this)">
-            <i class="fa-solid fa-thumbtack {{ 'text-primary' if note.is_pinned else '' }}"></i>
-        </button>
-        <button class="note-action-btn text-danger" title="Delete Note" onclick="deleteNoteFromCard(this)">
-            <i class="fa-solid fa-trash"></i>
-        </button>
-    </div>
-    
-    <div class="d-flex align-items-center gap-2 mb-2">
-        {% set icon_class = 'fa-file-lines text-muted' %}
-        {% if note.note_type == 'Hotel' %}{% set icon_class = 'fa-bed icon-hotel' %}
-        {% elif note.note_type == 'Transport' %}{% set icon_class = 'fa-plane icon-transport' %}
-        {% elif note.note_type == 'Food' %}{% set icon_class = 'fa-utensils icon-food' %}
-        {% elif note.note_type == 'Emergency' %}{% set icon_class = 'fa-kit-medical icon-emergency' %}
-        {% elif note.note_type == 'Shopping' %}{% set icon_class = 'fa-bag-shopping icon-shopping' %}
-        {% elif note.note_type == 'Reminder' %}{% set icon_class = 'fa-bell icon-reminder' %}
-        {% endif %}
-        <i class="fa-solid {{ icon_class }}"></i>
-        <span class="badge bg-light text-dark border">{{ note.note_type }}</span>
-        {% if note.trip %}
-        <span class="badge bg-primary bg-opacity-10 text-primary">{{ note.trip.name }}</span>
-        {% endif %}
-    </div>
-    
-    <h5 class="note-title">{{ note.title }}</h5>
-    <p class="note-preview">{{ note.content | markdown | safe }}</p>
-    
-    <div class="note-meta justify-content-between">
-        <span><i class="fa-regular fa-clock me-1"></i> {{ note.updated_at.strftime('%b %d, %Y') }}</span>
-        {% if note.reminder_date %}
-        <span class="text-warning fw-bold"><i class="fa-regular fa-calendar-check me-1"></i> {{ note.reminder_date.strftime('%b %d') }}</span>
-        {% endif %}
-    </div>
-</div>
-{% endmacro %}
+
 
 <!-- Toast Container -->
 <div class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index: 1100;">

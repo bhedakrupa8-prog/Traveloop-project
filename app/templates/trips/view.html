@@ -95,21 +95,23 @@
                     <small class="text-muted">Owner (You)</small>
                 </div>
             </div>
-            <button class="btn btn-light w-100 border-dashed fw-medium text-primary rounded-pill mt-2">
-                <i class="fa-solid fa-plus me-2"></i> Invite Members
+            <button class="btn btn-light w-100 border-dashed fw-medium text-primary rounded-pill mt-2" onclick="copyInviteLink('{{ trip.id }}', this)">
+                <i class="fa-solid fa-plus me-2"></i> <span class="btn-text">Invite Members</span>
             </button>
         </div>
 
         <!-- Budget Quick Stats -->
         <div class="card border-0 shadow-sm p-4" style="border-radius: var(--border-radius-sm); background: var(--gradient-accent); color: white;">
             <h5 class="fw-bold mb-4">Financial Overview</h5>
+            {% set total_budget = trip.budgets | sum(attribute='estimated_cost') if trip.budgets else 0 %}
+            {% set total_expenses = trip.budgets | sum(attribute='actual_cost') if trip.budgets else 0 %}
             <div class="mb-3">
                 <p class="mb-1 opacity-75 small text-uppercase tracking-wider fw-bold">Total Budget</p>
-                <h2 class="fw-bold mb-0">₹5,000.00</h2>
+                <h2 class="fw-bold mb-0">₹{{ "{:,.2f}".format(total_budget) }}</h2>
             </div>
             <div>
                 <p class="mb-1 opacity-75 small text-uppercase tracking-wider fw-bold">Tracked Expenses</p>
-                <h4 class="fw-bold mb-0">₹4,250.00</h4>
+                <h4 class="fw-bold mb-0">₹{{ "{:,.2f}".format(total_expenses) }}</h4>
             </div>
             <div class="mt-4 pt-3 border-top border-white border-opacity-25">
                 <a href="{{ url_for('trips.budget', trip_id=trip.id) }}" class="text-white text-decoration-none fw-medium w-100 d-block text-center">
@@ -119,4 +121,27 @@
         </div>
     </div>
 </div>
+
+<script>
+function copyInviteLink(tripId, btn) {
+    const url = `${window.location.origin}/trips/public/${tripId}`;
+    const textSpan = btn.querySelector('.btn-text');
+    const originalText = textSpan.innerText;
+    
+    navigator.clipboard.writeText(url).then(() => {
+        textSpan.innerText = "Link Copied!";
+        btn.classList.remove('btn-light', 'text-primary');
+        btn.classList.add('btn-success', 'text-white', 'border-success');
+        
+        setTimeout(() => {
+            textSpan.innerText = originalText;
+            btn.classList.remove('btn-success', 'text-white', 'border-success');
+            btn.classList.add('btn-light', 'text-primary');
+        }, 2000);
+    }).catch(err => {
+        console.error('Failed to copy: ', err);
+        alert("Failed to copy invite link.");
+    });
+}
+</script>
 {% endblock %}

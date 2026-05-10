@@ -157,7 +157,7 @@
                 </div>
             </div>
             <div class="text-end text-md-start">
-                <a href="{{ url_for('trips.create_trip') }}" class="btn btn-primary btn-lg rounded-pill px-4 shadow-sm fw-bold">
+                <a href="{{ url_for('trips.create_trip') }}" class="btn btn-light btn-lg rounded-pill px-4 shadow-sm fw-bold text-primary">
                     <i class="fa-solid fa-plus me-2"></i> Plan a New Trip
                 </a>
                 <p class="small opacity-50 mt-3 fst-italic max-w-sm">"The world is a book and those who do not travel read only one page."</p>
@@ -175,7 +175,6 @@
                 <div class="stat-icon-wrapper bg-primary bg-opacity-10 text-primary">
                     <i class="fa-solid fa-plane"></i>
                 </div>
-                <span class="badge bg-success bg-opacity-10 text-success rounded-pill small"><i class="fa-solid fa-arrow-up me-1"></i>12%</span>
             </div>
             <h3 class="fw-bold mb-0">{{ total_trips }}</h3>
             <p class="text-muted small fw-medium mb-0">Total Trips</p>
@@ -189,7 +188,7 @@
                     <i class="fa-solid fa-earth-americas"></i>
                 </div>
             </div>
-            <h3 class="fw-bold mb-0">{{ trips|length if trips else 0 }}</h3>
+            <h3 class="fw-bold mb-0">{{ total_countries }}</h3>
             <p class="text-muted small fw-medium mb-0">Countries Visited</p>
         </div>
     </div>
@@ -200,9 +199,8 @@
                 <div class="stat-icon-wrapper bg-warning bg-opacity-10 text-warning">
                     <i class="fa-solid fa-calendar-check"></i>
                 </div>
-                <span class="badge bg-primary bg-opacity-10 text-primary rounded-pill small">+3 New</span>
             </div>
-            <h3 class="fw-bold mb-0">12</h3>
+            <h3 class="fw-bold mb-0">{{ total_activities }}</h3>
             <p class="text-muted small fw-medium mb-0">Activities Planned</p>
         </div>
     </div>
@@ -213,9 +211,13 @@
                 <div class="stat-icon-wrapper bg-danger bg-opacity-10 text-danger">
                     <i class="fa-solid fa-wallet"></i>
                 </div>
-                <span class="badge bg-success bg-opacity-10 text-success rounded-pill small">-5%</span>
+                {% if budget_savings_pct > 0 %}
+                <span class="badge bg-success bg-opacity-10 text-success rounded-pill small">-{{ budget_savings_pct }}%</span>
+                {% elif budget_savings_pct < 0 %}
+                <span class="badge bg-danger bg-opacity-10 text-danger rounded-pill small">+{{ budget_savings_pct|abs }}%</span>
+                {% endif %}
             </div>
-            <h3 class="fw-bold mb-0">₹4,250</h3>
+            <h3 class="fw-bold mb-0">₹{{ "{:,.0f}".format(total_spent) }}</h3>
             <p class="text-muted small fw-medium mb-0">Total Budget</p>
         </div>
     </div>
@@ -224,11 +226,11 @@
         <div class="card stat-card border-0 p-3 shadow-sm h-100" style="border-left-color: #8B5CF6;">
             <div class="d-flex justify-content-between align-items-start mb-2">
                 <div class="stat-icon-wrapper bg-opacity-10 text-primary" style="background-color: rgba(139, 92, 246, 0.1); color: #8B5CF6;">
-                    <i class="fa-solid fa-ticket"></i>
+                    <i class="fa-solid fa-suitcase-rolling"></i>
                 </div>
             </div>
-            <h3 class="fw-bold mb-0">2</h3>
-            <p class="text-muted small fw-medium mb-0">Upcoming Flights</p>
+            <h3 class="fw-bold mb-0">{{ upcoming_trips }}</h3>
+            <p class="text-muted small fw-medium mb-0">Upcoming Trips</p>
         </div>
     </div>
     <!-- Saved Destinations -->
@@ -239,7 +241,7 @@
                     <i class="fa-solid fa-heart"></i>
                 </div>
             </div>
-            <h3 class="fw-bold mb-0">8</h3>
+            <h3 class="fw-bold mb-0">{{ saved_destinations }}</h3>
             <p class="text-muted small fw-medium mb-0">Saved Spots</p>
         </div>
     </div>
@@ -252,24 +254,29 @@
         <!-- Travel Insights AI Section -->
         <h5 class="fw-bold m-0 mb-3 d-flex align-items-center gap-2"><i class="fa-solid fa-sparkles text-primary"></i> Travel Insights</h5>
         <div class="row g-3 mb-4">
+            {% if insight_budget %}
             <div class="col-md-6">
-                <div class="insight-card success rounded-3 p-3 shadow-sm d-flex gap-3 align-items-start">
-                    <div class="text-success mt-1"><i class="fa-solid fa-circle-check"></i></div>
+                <div class="insight-card {{ insight_budget.status }} rounded-3 p-3 shadow-sm d-flex gap-3 align-items-start">
+                    <div class="text-{{ insight_budget.status }} mt-1"><i class="fa-solid {{ insight_budget.icon }}"></i></div>
                     <div>
-                        <h6 class="fw-bold mb-1 fs-6">Budget on Track</h6>
-                        <p class="mb-0 small text-muted">Your Paris trip is 12% under budget. You have ₹450 remaining for activities.</p>
+                        <h6 class="fw-bold mb-1 fs-6">{{ insight_budget.title }}</h6>
+                        <p class="mb-0 small text-muted">{{ insight_budget.message }}</p>
                     </div>
                 </div>
             </div>
+            {% endif %}
+            
+            {% if insight_packing %}
             <div class="col-md-6">
-                <div class="insight-card warning rounded-3 p-3 shadow-sm d-flex gap-3 align-items-start">
-                    <div class="text-warning mt-1"><i class="fa-solid fa-triangle-exclamation"></i></div>
+                <div class="insight-card {{ insight_packing.status }} rounded-3 p-3 shadow-sm d-flex gap-3 align-items-start">
+                    <div class="text-{{ insight_packing.status }} mt-1"><i class="fa-solid {{ insight_packing.icon }}"></i></div>
                     <div>
-                        <h6 class="fw-bold mb-1 fs-6">Packing Incomplete</h6>
-                        <p class="mb-0 small text-muted">Your packing checklist for "Euro Trip" is only 40% complete. Flight is in 8 days.</p>
+                        <h6 class="fw-bold mb-1 fs-6">{{ insight_packing.title }}</h6>
+                        <p class="mb-0 small text-muted">{{ insight_packing.message }}</p>
                     </div>
                 </div>
             </div>
+            {% endif %}
         </div>
 
         <!-- Upcoming Trips -->
@@ -332,36 +339,24 @@
         <h5 class="fw-bold mb-3">Recent Activity</h5>
         <div class="card border-0 shadow-sm p-4">
             <div class="timeline">
-                <div class="timeline-item">
-                    <div class="timeline-dot border-success"></div>
-                    <div class="d-flex justify-content-between">
-                        <div>
-                            <p class="mb-0 fw-bold text-dark fs-6">Eiffel Tower Tour Booked <span class="badge badge-soft-success ms-2">Activity</span></p>
-                            <p class="small text-muted mb-0 mt-1">Added by you in "Euro Trip 2026"</p>
+                {% if recent_activities %}
+                    {% for act in recent_activities %}
+                    <div class="timeline-item {% if loop.last %}mb-0{% endif %}">
+                        <div class="timeline-dot border-{{ act.type_class }}"></div>
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <p class="mb-0 fw-bold text-dark fs-6">{{ act.title }} <span class="badge badge-soft-{{ act.type_class }} ms-2">{{ act.type }}</span></p>
+                                <p class="small text-muted mb-0 mt-1">{{ act.desc }}</p>
+                            </div>
+                            <span class="small text-muted fw-medium">{{ act.time }}</span>
                         </div>
-                        <span class="small text-muted fw-medium">2h ago</span>
                     </div>
-                </div>
-                <div class="timeline-item">
-                    <div class="timeline-dot border-primary"></div>
-                    <div class="d-flex justify-content-between">
-                        <div>
-                            <p class="mb-0 fw-bold text-dark fs-6">Flight to Paris <span class="badge badge-soft-primary ms-2">Expense</span></p>
-                            <p class="small text-muted mb-0 mt-1">Logged ₹850.00 estimated cost</p>
-                        </div>
-                        <span class="small text-muted fw-medium">Yesterday</span>
+                    {% endfor %}
+                {% else %}
+                    <div class="text-center text-muted small py-2">
+                        No recent activity found. Start planning!
                     </div>
-                </div>
-                <div class="timeline-item mb-0">
-                    <div class="timeline-dot border-warning"></div>
-                    <div class="d-flex justify-content-between">
-                        <div>
-                            <p class="mb-0 fw-bold text-dark fs-6">Packing List Updated <span class="badge badge-soft-warning ms-2">Task</span></p>
-                            <p class="small text-muted mb-0 mt-1">Marked "Passport" and "Adapter" as packed</p>
-                        </div>
-                        <span class="small text-muted fw-medium">2 days ago</span>
-                    </div>
-                </div>
+                {% endif %}
             </div>
         </div>
     </div>
@@ -379,19 +374,19 @@
                 </a>
             </div>
             <div class="col-6">
-                <a href="#" class="quick-action-btn">
+                <a href="{{ url_for('trips.budget') }}" class="quick-action-btn">
                     <i class="fa-solid fa-receipt"></i>
                     <span>Log Expense</span>
                 </a>
             </div>
             <div class="col-6">
-                <a href="#" class="quick-action-btn">
+                <a href="{{ url_for('trips.itinerary') }}" class="quick-action-btn">
                     <i class="fa-regular fa-calendar-plus"></i>
                     <span>Add Activity</span>
                 </a>
             </div>
             <div class="col-6">
-                <a href="#" class="quick-action-btn">
+                <a href="{{ url_for('trips.list_trips') }}" class="quick-action-btn">
                     <i class="fa-solid fa-user-plus"></i>
                     <span>Invite Team</span>
                 </a>
@@ -413,9 +408,15 @@
             </ul>
             
             <div class="mb-4 text-center">
-                <h2 class="fw-bold text-dark mb-0">₹4,250</h2>
+                <h2 class="fw-bold text-dark mb-0">₹{{ "{:,.0f}".format(total_spent) }}</h2>
                 <p class="text-muted small fw-medium">Total Spent</p>
-                <span class="badge badge-soft-success rounded-pill px-2 py-1 small">You spent 12% less than planned</span>
+                {% if budget_savings_pct > 0 %}
+                <span class="badge badge-soft-success rounded-pill px-2 py-1 small">You spent {{ budget_savings_pct }}% less than planned</span>
+                {% elif budget_savings_pct < 0 %}
+                <span class="badge badge-soft-danger rounded-pill px-2 py-1 small">You spent {{ budget_savings_pct|abs }}% more than planned</span>
+                {% else %}
+                <span class="badge badge-soft-primary rounded-pill px-2 py-1 small">On track with budget</span>
+                {% endif %}
             </div>
 
             <div style="position: relative; height: 200px; width: 100%;">
@@ -425,62 +426,41 @@
             <div class="mt-4 pt-3 border-top">
                 <div class="d-flex justify-content-between mb-2">
                     <span class="small fw-medium text-dark"><i class="fa-solid fa-bed text-primary me-2"></i>Stay</span>
-                    <span class="small fw-bold">₹1,450</span>
+                    <span class="small fw-bold">₹{{ "{:,.0f}".format(category_totals['Stay']) }}</span>
                 </div>
                 <div class="d-flex justify-content-between mb-2">
                     <span class="small fw-medium text-dark"><i class="fa-solid fa-plane text-success me-2"></i>Transport</span>
-                    <span class="small fw-bold">₹850</span>
+                    <span class="small fw-bold">₹{{ "{:,.0f}".format(category_totals['Transport']) }}</span>
                 </div>
                 <div class="d-flex justify-content-between">
                     <span class="small fw-medium text-dark"><i class="fa-solid fa-utensils text-warning me-2"></i>Food</span>
-                    <span class="small fw-bold">₹600</span>
+                    <span class="small fw-bold">₹{{ "{:,.0f}".format(category_totals['Food']) }}</span>
                 </div>
             </div>
         </div>
 
-        <!-- Compact Weather Cards -->
-        <h5 class="fw-bold mb-3">Weather Preview</h5>
-        
-        <div class="weather-card shadow-sm" style="background-image: url('https://images.unsplash.com/photo-1502602898657-3e91760cbb34?auto=format&fit=crop&w=400&q=80');">
-            <div class="weather-content">
-                <div>
-                    <h6 class="fw-bold mb-0 fs-5">Paris, FR</h6>
-                    <p class="mb-0 small opacity-75">10:30 AM • Perfect for sightseeing</p>
-                </div>
-                <div class="text-end d-flex align-items-center gap-2">
-                    <i class="fa-solid fa-cloud-sun fs-2"></i>
-                    <h4 class="fw-bold mb-0">22°</h4>
-                </div>
-            </div>
-        </div>
 
-        <div class="weather-card shadow-sm" style="background-image: url('https://images.unsplash.com/photo-1517736996303-4e64a4f87311?auto=format&fit=crop&w=400&q=80');">
-            <div class="weather-content">
-                <div>
-                    <h6 class="fw-bold mb-0 fs-5">Amsterdam, NL</h6>
-                    <p class="mb-0 small opacity-75">10:30 AM • Light rain expected</p>
-                </div>
-                <div class="text-end d-flex align-items-center gap-2">
-                    <i class="fa-solid fa-cloud-rain fs-2"></i>
-                    <h4 class="fw-bold mb-0">16°</h4>
-                </div>
-            </div>
-        </div>
 
     </div>
 </div>
 {% endblock %}
 
 {% block extra_js %}
+<script id="budget-data" type="application/json">
+{{ [category_totals['Stay'], category_totals['Transport'], category_totals['Food'], category_totals['Activities'], category_totals['Other']] | tojson }}
+</script>
 <script>
     const ctx = document.getElementById('mainBudgetChart');
     if (ctx) {
+        const budgetDataElement = document.getElementById('budget-data');
+        const budgetData = budgetDataElement ? JSON.parse(budgetDataElement.textContent) : [0, 0, 0, 0, 0];
+
         new Chart(ctx.getContext('2d'), {
             type: 'doughnut',
             data: {
                 labels: ['Stay', 'Transport', 'Food', 'Activities', 'Other'],
                 datasets: [{
-                    data: [1450, 850, 600, 1050, 300],
+                    data: budgetData,
                     backgroundColor: [
                         '#5B4CF0', '#10B981', '#F59E0B', '#EF4444', '#6B7280'
                     ],

@@ -493,8 +493,8 @@ function renderTrips(trips) {
                         <img src="https://ui-avatars.com/api/?name=Admin&background=random" alt="Admin">
                     </div>
                     <div class="d-flex gap-2">
-                        <button class="action-btn" title="Share"><i class="fa-solid fa-share-nodes"></i></button>
-                        <button class="action-btn" title="Edit"><i class="fa-solid fa-pen"></i></button>
+                        <button class="action-btn" title="Share" onclick="copyShareLink('${t.id}')"><i class="fa-solid fa-share-nodes"></i></button>
+                        <button class="action-btn" title="Edit" onclick="editTrip('${t.id}')"><i class="fa-solid fa-pen"></i></button>
                     </div>
                 </div>
             </div>
@@ -502,6 +502,70 @@ function renderTrips(trips) {
     });
     
     grid.innerHTML = html;
+}
+
+function showToast(message, type = 'success') {
+    // Create toast container if it doesn't exist
+    let toastContainer = document.getElementById('toast-container');
+    if (!toastContainer) {
+        toastContainer = document.createElement('div');
+        toastContainer.id = 'toast-container';
+        toastContainer.style.position = 'fixed';
+        toastContainer.style.bottom = '2rem';
+        toastContainer.style.right = '2rem';
+        toastContainer.style.zIndex = '9999';
+        toastContainer.style.display = 'flex';
+        toastContainer.style.flexDirection = 'column';
+        toastContainer.style.gap = '10px';
+        document.body.appendChild(toastContainer);
+    }
+
+    // Create toast element
+    const toast = document.createElement('div');
+    toast.className = `d-flex align-items-center p-3 mb-2 bg-white text-dark shadow-lg rounded-pill border border-${type === 'success' ? 'success' : 'danger'}`;
+    toast.style.minWidth = '250px';
+    toast.style.transform = 'translateY(100px)';
+    toast.style.opacity = '0';
+    toast.style.transition = 'all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55)';
+    
+    // Icon based on type
+    const iconClass = type === 'success' ? 'fa-circle-check text-success' : 'fa-circle-exclamation text-danger';
+    
+    toast.innerHTML = `
+        <i class="fa-solid ${iconClass} fs-5 me-3"></i>
+        <span class="fw-bold">${message}</span>
+    `;
+    
+    toastContainer.appendChild(toast);
+    
+    // Animate in
+    setTimeout(() => {
+        toast.style.transform = 'translateY(0)';
+        toast.style.opacity = '1';
+    }, 10);
+    
+    // Animate out and remove
+    setTimeout(() => {
+        toast.style.transform = 'translateY(10px)';
+        toast.style.opacity = '0';
+        setTimeout(() => toast.remove(), 300);
+    }, 3000);
+}
+
+function copyShareLink(tripId, event) {
+    if (event) event.stopPropagation();
+    const url = `${window.location.origin}/trips/public/${tripId}`;
+    navigator.clipboard.writeText(url).then(() => {
+        showToast("Share link copied to clipboard!");
+    }).catch(err => {
+        console.error('Failed to copy:', err);
+        showToast("Failed to copy share link.", "error");
+    });
+}
+
+function editTrip(tripId, event) {
+    if (event) event.stopPropagation();
+    window.location.href = `/trips/${tripId}`;
 }
 
 // Initial load

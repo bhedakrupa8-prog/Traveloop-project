@@ -76,44 +76,42 @@
                 <div class="dropdown">
                     <button class="icon-btn position-relative border-0 bg-transparent" data-bs-toggle="dropdown" aria-expanded="false">
                         <i class="fa-regular fa-bell"></i>
-                        <span class="position-absolute top-0 start-100 translate-middle p-1 bg-danger border border-light rounded-circle">
+                        <span id="notif-dot" class="position-absolute top-0 start-100 translate-middle p-1 bg-danger border border-light rounded-circle {% if not notifications %}d-none{% endif %}">
                             <span class="visually-hidden">New alerts</span>
                         </span>
                     </button>
-                    <ul class="dropdown-menu dropdown-menu-end shadow-lg border-0 p-0" style="border-radius: var(--border-radius-sm); width: 300px;">
+                    <ul id="notif-menu" class="dropdown-menu dropdown-menu-end shadow-lg border-0 p-0" style="border-radius: var(--border-radius-sm); width: 300px;">
                         <li class="p-3 border-bottom bg-light rounded-top d-flex justify-content-between align-items-center">
                             <span class="fw-bold mb-0">Notifications</span>
-                            <span class="badge bg-primary rounded-pill">2 New</span>
+                            {% if notifications %}
+                            <span class="badge bg-primary rounded-pill">{{ notifications|length }} New</span>
+                            {% endif %}
                         </li>
-                        <li>
-                            <a class="dropdown-item py-3 border-bottom text-wrap" href="#">
-                                <div class="d-flex gap-3">
-                                    <div class="bg-primary bg-opacity-10 text-primary rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="width: 32px; height: 32px;">
-                                        <i class="fa-solid fa-plane-arrival"></i>
+                        
+                        {% if notifications %}
+                            {% for notif in notifications %}
+                            <li>
+                                <a class="dropdown-item py-3 {% if not loop.last %}border-bottom{% endif %} text-wrap" href="#">
+                                    <div class="d-flex gap-3">
+                                        <div class="bg-{{ notif.type }} bg-opacity-10 text-{{ notif.type }} rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="width: 32px; height: 32px;">
+                                            <i class="fa-solid {{ notif.icon }}"></i>
+                                        </div>
+                                        <div>
+                                            <p class="mb-1 small fw-medium text-dark">{{ notif.message }}</p>
+                                            <small class="text-muted">{{ notif.time }}</small>
+                                        </div>
                                     </div>
-                                    <div>
-                                        <p class="mb-1 small fw-medium text-dark">Your trip to Paris starts in 3 days!</p>
-                                        <small class="text-muted">1 hour ago</small>
-                                    </div>
-                                </div>
-                            </a>
-                        </li>
-                        <li>
-                            <a class="dropdown-item py-3 text-wrap" href="#">
-                                <div class="d-flex gap-3">
-                                    <div class="bg-warning bg-opacity-10 text-warning rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="width: 32px; height: 32px;">
-                                        <i class="fa-solid fa-triangle-exclamation"></i>
-                                    </div>
-                                    <div>
-                                        <p class="mb-1 small fw-medium text-dark">You have unpacked items in your checklist.</p>
-                                        <small class="text-muted">5 hours ago</small>
-                                    </div>
-                                </div>
-                            </a>
-                        </li>
-                        <li class="p-2 border-top text-center">
-                            <a class="text-primary fw-bold text-decoration-none small" href="#">Mark all as read</a>
-                        </li>
+                                </a>
+                            </li>
+                            {% endfor %}
+                            <li class="p-2 border-top text-center">
+                                <a id="markReadBtn" class="text-primary fw-bold text-decoration-none small" href="#">Mark all as read</a>
+                            </li>
+                        {% else %}
+                            <li class="py-4 text-center">
+                                <p class="text-muted small mb-0">You have no new notifications.</p>
+                            </li>
+                        {% endif %}
                     </ul>
                 </div>
                 <div class="dropdown">
@@ -175,6 +173,32 @@
 {% endif %}
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const markReadBtn = document.getElementById('markReadBtn');
+        if (markReadBtn) {
+            markReadBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                // Hide red dot
+                const notifDot = document.getElementById('notif-dot');
+                if (notifDot) notifDot.classList.add('d-none');
+                
+                // Update dropdown menu
+                const notifMenu = document.getElementById('notif-menu');
+                if (notifMenu) {
+                    notifMenu.innerHTML = `
+                        <li class="p-3 border-bottom bg-light rounded-top d-flex justify-content-between align-items-center">
+                            <span class="fw-bold mb-0">Notifications</span>
+                        </li>
+                        <li class="py-4 text-center">
+                            <p class="text-muted small mb-0">You have no new notifications.</p>
+                        </li>
+                    `;
+                }
+            });
+        }
+    });
+</script>
 {% block extra_js %}{% endblock %}
 </body>
 </html>

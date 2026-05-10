@@ -42,6 +42,11 @@
                     <option value="Electronics">💻 Electronics</option>
                     <option value="Documents">📁 Documents</option>
                     <option value="Toiletries">🧴 Toiletries</option>
+                    <option value="Health">💊 Health & Meds</option>
+                    <option value="Photography">📸 Photography</option>
+                    <option value="Beach">🏖️ Beach Gear</option>
+                    <option value="Outdoor">🏔️ Outdoor Gear</option>
+                    <option value="Kids">👶 Baby & Kids</option>
                     <option value="General">🎒 General</option>
                 </select>
                 <button type="submit" class="btn btn-primary btn-lg rounded-pill px-4 shadow-sm fw-bold flex-shrink-0"><i class="fa-solid fa-plus me-1"></i> Add</button>
@@ -50,14 +55,14 @@
             <!-- Progress Bar -->
             {% set total_items = trip.packing_items|length %}
             {% set packed_items = trip.packing_items|selectattr('is_packed')|list|length %}
-            {% set progress = (packed_items / total_items * 100)|round if total_items > 0 else 0 %}
+            {% set progress = (packed_items / total_items * 100)|int if total_items > 0 else 0 %}
             <div class="mb-4">
                 <div class="d-flex justify-content-between align-items-center mb-2">
                     <span class="fw-bold text-dark text-uppercase tracking-wider small">Packing Progress</span>
-                    <span class="fw-bold text-primary">{{ progress }}%</span>
+                    <span class="fw-bold text-primary" id="progressText">{{ progress }}%</span>
                 </div>
                 <div class="progress" style="height: 8px; border-radius: 4px; background-color: var(--border-light);">
-                    <div class="progress-bar bg-primary" role="progressbar" id="packingProgressBar" aria-valuenow="{{ progress }}" aria-valuemin="0" aria-valuemax="100" style="border-radius: 4px;"></div>
+                    <div class="progress-bar bg-primary transition-all" role="progressbar" id="packingProgressBar" aria-valuenow="{{ progress }}" aria-valuemin="0" aria-valuemax="100" style="border-radius: 4px;"></div>
                 </div>
                 <script>
                     document.getElementById('packingProgressBar').style.width = "{{ progress }}%";
@@ -67,14 +72,32 @@
             <!-- Packing List -->
             <div class="list-group list-group-flush" id="packingList">
                 {% for item in trip.packing_items %}
-                    <div class="list-group-item d-flex justify-content-between align-items-center border-0 mb-3 rounded-3 p-3 transition-all {% if item.is_packed %}packing-packed{% else %}packing-unpacked{% endif %}">
+                    <div class="list-group-item d-flex justify-content-between align-items-center border-0 mb-3 rounded-3 p-3 transition-all packing-item-container {% if item.is_packed %}packing-packed{% else %}packing-unpacked{% endif %}" data-id="{{ item.id }}">
                         <div class="form-check d-flex align-items-center m-0 w-100">
                             <input class="form-check-input packing-checkbox border-2" type="checkbox" data-id="{{ item.id }}" id="item_{{ item.id }}" {% if item.is_packed %}checked{% endif %} style="width: 24px; height: 24px; cursor: pointer; border-color: var(--primary);">
                             <label class="form-check-label ms-3 {% if item.is_packed %}text-decoration-line-through text-muted{% else %}fw-bold text-dark{% endif %}" for="item_{{ item.id }}" style="cursor: pointer; flex: 1; padding-top: 2px;">
                                 {{ item.item_name }}
                             </label>
                         </div>
-                        <span class="badge badge-soft-primary px-3 py-2 rounded-pill fw-medium flex-shrink-0">{{ item.category }}</span>
+                        <div class="d-flex align-items-center gap-3">
+                            <span class="badge 
+                                {% if item.category == 'Clothing' %}bg-primary bg-opacity-10 text-primary
+                                {% elif item.category == 'Electronics' %}bg-info bg-opacity-10 text-info
+                                {% elif item.category == 'Documents' %}bg-warning bg-opacity-10 text-warning
+                                {% elif item.category == 'Toiletries' %}bg-success bg-opacity-10 text-success
+                                {% elif item.category == 'Health' %}bg-danger bg-opacity-10 text-danger
+                                {% elif item.category == 'Photography' %}bg-dark bg-opacity-10 text-dark
+                                {% elif item.category == 'Beach' %}bg-primary bg-opacity-25 text-primary
+                                {% elif item.category == 'Outdoor' %}bg-success bg-opacity-25 text-success
+                                {% elif item.category == 'Kids' %}bg-warning bg-opacity-25 text-warning
+                                {% else %}bg-secondary bg-opacity-10 text-secondary{% endif %}
+                                px-3 py-2 rounded-pill fw-bold flex-shrink-0">
+                                {{ item.category }}
+                            </span>
+                            <button class="btn btn-sm btn-link text-danger p-0 border-0 opacity-50 hover-opacity-100 packing-delete-btn" data-id="{{ item.id }}">
+                                <i class="fa-solid fa-trash-can fs-5"></i>
+                            </button>
+                        </div>
                     </div>
                 {% endfor %}
                 {% if not trip.packing_items %}
@@ -143,13 +166,43 @@ document.querySelectorAll('.packing-checkbox').forEach(box => {
                     container.classList.remove('packing-packed');
                     container.classList.add('packing-unpacked');
                 }
-                // Option to reload for exact progress bar calculation:
-                // window.location.reload(); 
+                
+                // Update Progress Bar Dynamically
+                const totalBoxes = document.querySelectorAll('.packing-checkbox').length;
+                const checkedBoxes = document.querySelectorAll('.packing-checkbox:checked').length;
+                const progress = totalBoxes > 0 ? Math.round((checkedBoxes / totalBoxes) * 100) : 0;
+                
+                document.getElementById('packingProgressBar').style.width = progress + '%';
+                document.getElementById('packingProgressBar').setAttribute('aria-valuenow', progress);
+                document.getElementById('progressText').innerText = progress + '%';
+                
             }
         } catch (err) {
             console.error(err);
             // Revert state on error
             this.checked = !this.checked;
+        }
+    });
+});
+
+document.querySelectorAll('.packing-delete-btn').forEach(btn => {
+    btn.addEventListener('click', async function() {
+        if(!confirm("Are you sure you want to delete this item?")) return;
+        
+        const id = this.dataset.id;
+        try {
+            const response = await fetch(`/trips/api/packing/${id}`, {
+                method: 'DELETE'
+            });
+            
+            if (response.ok) {
+                window.location.reload();
+            } else {
+                alert("Failed to delete item.");
+            }
+        } catch (err) {
+            console.error(err);
+            alert("Error deleting item.");
         }
     });
 });

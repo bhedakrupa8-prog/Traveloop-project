@@ -311,13 +311,14 @@ h1, h2, h3, h4, h5, h6 {
 
 /* Dashboard Hero */
 .dashboard-hero {
-  background: var(--surface);
+  background: var(--gradient-accent);
+  color: white;
   border-radius: var(--border-radius);
   padding: 2.5rem;
   position: relative;
   overflow: hidden;
-  box-shadow: var(--shadow-sm);
-  border: 1px solid var(--border-color);
+  box-shadow: var(--shadow-md);
+  border: none;
   transform: translateZ(0); /* Fix background scroll lag */
 }
 
@@ -326,7 +327,8 @@ h1, h2, h3, h4, h5, h6 {
   position: absolute;
   top: 0; right: 0; bottom: 0; left: 0;
   background: url('https://images.unsplash.com/photo-1436491865332-7a61a109cc05?auto=format&fit=crop&q=80&w=1200') center/cover;
-  opacity: 0.05;
+  opacity: 0.15;
+  mix-blend-mode: overlay;
   z-index: 0;
 }
 

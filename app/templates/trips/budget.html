@@ -80,6 +80,10 @@
                                         {% elif budget.category == 'Transport' %}<i class="fa-solid fa-plane"></i>
                                         {% elif budget.category == 'Food' %}<i class="fa-solid fa-utensils"></i>
                                         {% elif budget.category == 'Activities' %}<i class="fa-solid fa-ticket"></i>
+                                        {% elif budget.category == 'Shopping' %}<i class="fa-solid fa-bag-shopping"></i>
+                                        {% elif budget.category == 'Visa' %}<i class="fa-solid fa-passport"></i>
+                                        {% elif budget.category == 'Insurance' %}<i class="fa-solid fa-shield-halved"></i>
+                                        {% elif budget.category == 'Comms' %}<i class="fa-solid fa-sim-card"></i>
                                         {% else %}<i class="fa-solid fa-receipt"></i>{% endif %}
                                         {{ budget.category }}
                                     </span>
@@ -123,6 +127,10 @@
                     <option value="Transport">✈️ Transport / Flights</option>
                     <option value="Food">🍽️ Food & Dining</option>
                     <option value="Activities">🎟️ Activities & Tours</option>
+                    <option value="Shopping">🛍️ Shopping & Souvenirs</option>
+                    <option value="Visa">🛂 Visa & Documents</option>
+                    <option value="Insurance">🛡️ Travel Insurance</option>
+                    <option value="Comms">📱 Comms & SIM</option>
                     <option value="Other">🧾 Other Expenses</option>
                 </select>
             </div>
