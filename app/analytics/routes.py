@@ -1,7 +1,8 @@
-from flask import render_template, session, redirect, url_for
+from flask import render_template, session, redirect, url_for, request, flash
 from app.analytics import analytics_bp
 from app.models.trip import Trip, TripStop
 from app.models.budget import Budget
+from app.models.user import User
 from app.extensions import db
 from sqlalchemy import func
 
@@ -11,7 +12,10 @@ def index():
         return redirect(url_for('auth.login'))
         
     user_id = session['user_id']
-    
+    user = User.query.get(user_id)
+    if user and user.is_admin:
+        return redirect(url_for('analytics.admin_dashboard'))
+        
     # Base queries
     user_trips = Trip.query.filter_by(user_id=user_id).all()
     trip_ids = [t.id for t in user_trips]
@@ -55,3 +59,29 @@ def index():
         month_labels=month_labels,
         month_data=month_data
     )
+
+@analytics_bp.route('/admin', methods=['GET'])
+def admin_dashboard():
+    if 'user_id' not in session:
+        return redirect(url_for('auth.login'))
+        
+    user = User.query.get(session['user_id'])
+    if not user or not user.is_admin:
+        flash("You do not have permission to access the admin dashboard.", "danger")
+        return redirect(url_for('main.index'))
+        
+    total_users = User.query.count()
+    total_trips = Trip.query.count()
+    
+    top_cities = db.session.query(TripStop.city, func.count(TripStop.id).label('count')).group_by(TripStop.city).order_by(db.text('count DESC')).limit(5).all()
+    
+    recent_users = User.query.order_by(User.created_at.desc()).limit(10).all()
+    
+    return render_template(
+        'analytics/admin.html',
+        total_users=total_users,
+        total_trips=total_trips,
+        top_cities=top_cities,
+        recent_users=recent_users
+    )
+

@@ -197,32 +197,61 @@
 
 <!-- Add Stop Modal (City Search) -->
 <div class="modal fade" id="addStopModal" tabindex="-1">
-  <div class="modal-dialog modal-dialog-centered">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
     <div class="modal-content border-0 shadow-lg" style="border-radius: var(--border-radius);">
       <div class="modal-header border-bottom-0 pb-0 pt-4 px-4">
         <h4 class="modal-title fw-bold">Search Destination</h4>
         <button type="button" class="btn-close shadow-none" data-bs-dismiss="modal"></button>
       </div>
       <div class="modal-body p-4">
+        
+        <!-- Search and Filter Bar -->
+        <div class="row g-2 mb-4">
+            <div class="col-md-8">
+                <div class="input-group">
+                    <span class="input-group-text bg-light border-end-0 text-muted"><i class="fa-solid fa-magnifying-glass"></i></span>
+                    <input type="text" class="form-control bg-light border-start-0 ps-0" id="citySearchInput" placeholder="Search for a city...">
+                </div>
+            </div>
+            <div class="col-md-4">
+                <select class="form-select bg-light" id="regionFilter">
+                    <option value="all">All Regions</option>
+                    <option value="Europe">Europe</option>
+                    <option value="Asia">Asia</option>
+                    <option value="North America">North America</option>
+                    <option value="South America">South America</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- City Search Results -->
+        <div class="row g-3 mb-4" id="citySearchResults" style="max-height: 300px; overflow-y: auto;">
+            <!-- Rendered by JS -->
+        </div>
+
+        <hr class="opacity-25 mb-4">
+
+        <!-- Selected City Form -->
         <form id="addStopForm">
-            <div class="row mb-4 g-3">
+            <h6 class="fw-bold mb-3">Selected Destination Details</h6>
+            <div class="row mb-3 g-3">
                 <div class="col-md-6">
-                    <label class="form-label fw-bold text-dark">City Name</label>
-                    <input type="text" class="form-control bg-light" id="stopCity" placeholder="e.g., London" required>
+                    <label class="form-label fw-bold text-dark small">City Name</label>
+                    <input type="text" class="form-control bg-light" id="stopCity" placeholder="Select a city above or enter manually" required>
                 </div>
                 <div class="col-md-6">
-                    <label class="form-label fw-bold text-dark">Country</label>
-                    <input type="text" class="form-control bg-light" id="stopCountry" placeholder="e.g., UK" required>
+                    <label class="form-label fw-bold text-dark small">Country</label>
+                    <input type="text" class="form-control bg-light" id="stopCountry" placeholder="Country" required>
                 </div>
             </div>
 
             <div class="row mb-2 g-3">
                 <div class="col-6">
-                    <label class="form-label fw-bold text-dark">Arrival Date</label>
+                    <label class="form-label fw-bold text-dark small">Arrival Date</label>
                     <input type="date" class="form-control bg-light" id="stopStart" required>
                 </div>
                 <div class="col-6">
-                    <label class="form-label fw-bold text-dark">Departure Date</label>
+                    <label class="form-label fw-bold text-dark small">Departure Date</label>
                     <input type="date" class="form-control bg-light" id="stopEnd" required>
                 </div>
             </div>
@@ -313,7 +342,73 @@
 
 {% block extra_js %}
 <script>
-// CITY SEARCH LOGIC REMOVED - using direct inputs now
+// CITY SEARCH LOGIC
+const mockCities = [
+    { city: "Paris", country: "France", region: "Europe", cost: "$$$", popularity: "High" },
+    { city: "London", country: "UK", region: "Europe", cost: "$$$", popularity: "High" },
+    { city: "Tokyo", country: "Japan", region: "Asia", cost: "$$$", popularity: "High" },
+    { city: "Bangkok", country: "Thailand", region: "Asia", cost: "$", popularity: "High" },
+    { city: "New York", country: "USA", region: "North America", cost: "$$$$", popularity: "High" },
+    { city: "Rio de Janeiro", country: "Brazil", region: "South America", cost: "$$", popularity: "Medium" },
+    { city: "Rome", country: "Italy", region: "Europe", cost: "$$$", popularity: "High" },
+    { city: "Bali", country: "Indonesia", region: "Asia", cost: "$$", popularity: "High" }
+];
+
+function renderCities(cities) {
+    const container = document.getElementById('citySearchResults');
+    container.innerHTML = '';
+    
+    if (cities.length === 0) {
+        container.innerHTML = '<div class="col-12 text-center text-muted py-3">No cities found.</div>';
+        return;
+    }
+    
+    cities.forEach(c => {
+        const div = document.createElement('div');
+        div.className = 'col-md-6';
+        div.innerHTML = `
+            <div class="activity-browse-item text-start d-flex justify-content-between align-items-center" onclick="selectCity('${c.city}', '${c.country}')">
+                <div>
+                    <strong class="d-block text-dark">${c.city}</strong>
+                    <small class="text-muted"><i class="fa-solid fa-earth-americas me-1"></i>${c.country}</small>
+                </div>
+                <div class="text-end">
+                    <span class="badge bg-light text-dark border mb-1">${c.cost}</span><br>
+                    <small class="text-primary" style="font-size: 0.7rem;">Pop: ${c.popularity}</small>
+                </div>
+            </div>
+        `;
+        container.appendChild(div);
+    });
+}
+
+function selectCity(city, country) {
+    document.getElementById('stopCity').value = city;
+    document.getElementById('stopCountry').value = country;
+    // visual feedback
+    document.querySelectorAll('#citySearchResults .activity-browse-item').forEach(el => el.classList.remove('selected'));
+    event.currentTarget.classList.add('selected');
+}
+
+function filterCities() {
+    const q = document.getElementById('citySearchInput').value.toLowerCase();
+    const region = document.getElementById('regionFilter').value;
+    
+    const filtered = mockCities.filter(c => {
+        const matchQ = c.city.toLowerCase().includes(q) || c.country.toLowerCase().includes(q);
+        const matchRegion = region === 'all' || c.region === region;
+        return matchQ && matchRegion;
+    });
+    renderCities(filtered);
+}
+
+document.getElementById('citySearchInput').addEventListener('input', filterCities);
+document.getElementById('regionFilter').addEventListener('change', filterCities);
+
+// Initialize city search on load
+document.addEventListener('DOMContentLoaded', () => {
+    renderCities(mockCities);
+});
 
 async function submitStop() {
     const btn = event.target;

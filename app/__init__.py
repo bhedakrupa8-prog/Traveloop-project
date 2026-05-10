@@ -31,4 +31,13 @@ def create_app(config_class=Config):
     app.register_blueprint(analytics_bp, url_prefix='/analytics')
     app.register_blueprint(main_bp)
 
+    @app.context_processor
+    def inject_user():
+        from flask import session
+        from app.models.user import User
+        if 'user_id' in session:
+            user = User.query.get(session['user_id'])
+            return dict(user=user)
+        return dict(user=None)
+
     return app
