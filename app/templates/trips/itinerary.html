@@ -1,0 +1,425 @@
+{% extends "base.html" %}
+{% block title %}Itinerary Builder - {{ trip.name }}{% endblock %}
+
+{% block extra_css %}
+<style>
+.search-dropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: white;
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-sm);
+    box-shadow: var(--shadow-md);
+    z-index: 1000;
+    max-height: 250px;
+    overflow-y: auto;
+    display: none;
+}
+.search-result-item {
+    padding: 0.75rem 1rem;
+    cursor: pointer;
+    border-bottom: 1px solid var(--border-light);
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    transition: background-color 0.2s;
+}
+.search-result-item:last-child { border-bottom: none; }
+.search-result-item:hover { background-color: var(--bg-color); }
+
+.activity-card {
+    border: 1px solid var(--border-light);
+    border-radius: var(--border-radius-sm);
+    padding: 1rem;
+    margin-bottom: 0.75rem;
+    background: white;
+    transition: transform 0.2s, box-shadow 0.2s;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.activity-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-sm);
+    border-color: var(--primary);
+}
+.activity-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+}
+.activity-browse-item {
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-sm);
+    padding: 1rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-align: center;
+}
+.activity-browse-item:hover, .activity-browse-item.selected {
+    border-color: var(--primary);
+    background: rgba(91, 76, 240, 0.05);
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="mb-4 d-flex justify-content-between align-items-center">
+    <div>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb mb-1">
+                <li class="breadcrumb-item"><a href="{{ url_for('trips.view_trip', trip_id=trip.id) }}" class="text-decoration-none text-primary fw-medium">{{ trip.name }}</a></li>
+                <li class="breadcrumb-item active text-dark fw-bold" aria-current="page">Itinerary Builder</li>
+            </ol>
+        </nav>
+        <h2 class="fw-bold text-dark mb-0">Route & Timeline</h2>
+        <div id="tripDataContainer" data-trip-id="{{ trip.id }}" style="display: none;"></div>
+    </div>
+    <button class="btn btn-primary rounded-pill px-4 shadow-sm fw-bold" data-bs-toggle="modal" data-bs-target="#addStopModal">
+        <i class="fa-solid fa-location-dot me-2"></i> Add Destination
+    </button>
+</div>
+
+<div class="row g-4">
+    <!-- Timeline Builder -->
+    <div class="col-lg-8">
+        <div class="card border-0 shadow-sm p-4" style="border-radius: var(--border-radius);">
+            {% if trip.stops %}
+                <div class="timeline position-relative ps-4 py-2" style="border-left: 2px dashed var(--border-color);">
+                    {% for stop in trip.stops %}
+                        <div class="position-relative mb-5">
+                            <!-- Timeline Node -->
+                            <div class="position-absolute bg-primary rounded-circle shadow-sm d-flex justify-content-center align-items-center text-white" style="width: 32px; height: 32px; left: -41px; top: 0px; border: 4px solid white;">
+                                <span class="fw-bold" style="font-size: 0.75rem;">{{ loop.index }}</span>
+                            </div>
+                            
+                            <!-- Destination Card -->
+                            <div class="card border border-light shadow-sm" style="border-radius: 16px;">
+                                <div class="card-body p-4">
+                                    <div class="d-flex justify-content-between align-items-start mb-4">
+                                        <div>
+                                            <h4 class="fw-bold text-dark mb-1">{{ stop.city }}</h4>
+                                            <p class="text-muted fw-medium mb-0"><i class="fa-solid fa-earth-americas me-1 text-primary opacity-75"></i> {{ stop.country }}</p>
+                                        </div>
+                                        <div class="text-end">
+                                            <div class="bg-light px-3 py-1 rounded-pill border fw-bold text-dark d-inline-block">
+                                                {{ stop.start_date.strftime('%b %d') }} - {{ stop.end_date.strftime('%b %d') }}
+                                            </div>
+                                            <p class="text-muted small fw-medium mt-2 mb-0">{{ (stop.end_date - stop.start_date).days }} Days</p>
+                                        </div>
+                                    </div>
+
+                                    <!-- Activities List -->
+                                    <div class="d-flex justify-content-between align-items-center mb-3">
+                                        <h6 class="text-uppercase tracking-wider fw-bold text-muted mb-0">Planned Activities</h6>
+                                        <button class="btn btn-sm btn-outline-primary rounded-pill fw-bold px-3 open-activity-btn" data-stop-id="{{ stop.id }}" data-city-name="{{ stop.city }}">
+                                            <i class="fa-solid fa-plus me-1"></i> Add Activity
+                                        </button>
+                                    </div>
+
+                                    {% if stop.activities %}
+                                        <div class="activities-container">
+                                            {% for activity in stop.activities %}
+                                                <div class="activity-card">
+                                                    <div class="d-flex align-items-center gap-3">
+                                                        <div class="activity-icon bg-primary bg-opacity-10 text-primary">
+                                                            {% if activity.category == 'Food' %}<i class="fa-solid fa-utensils"></i>
+                                                            {% elif activity.category == 'Adventure' %}<i class="fa-solid fa-person-hiking"></i>
+                                                            {% elif activity.category == 'Sightseeing' %}<i class="fa-solid fa-camera"></i>
+                                                            {% else %}<i class="fa-solid fa-star"></i>{% endif %}
+                                                        </div>
+                                                        <div>
+                                                            <h6 class="fw-bold mb-0 text-dark">{{ activity.title }}</h6>
+                                                            <small class="text-muted">{{ activity.description or activity.category }}</small>
+                                                        </div>
+                                                    </div>
+                                                    <div class="text-end">
+                                                        <span class="badge badge-soft-success rounded-pill px-2 py-1 mb-1">₹{{ "%.2f"|format(activity.estimated_cost) }}</span>
+                                                    </div>
+                                                </div>
+                                            {% endfor %}
+                                        </div>
+                                    {% else %}
+                                        <div class="bg-light rounded-3 p-4 text-center border border-light">
+                                            <i class="fa-solid fa-clipboard-list text-muted fs-3 mb-2 opacity-50"></i>
+                                            <p class="text-muted small fw-medium mb-0">No activities scheduled yet.</p>
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                    
+                    <!-- End Node -->
+                    <div class="position-relative">
+                        <div class="position-absolute bg-light border rounded-circle d-flex justify-content-center align-items-center text-muted" style="width: 32px; height: 32px; left: -41px; top: 0px;">
+                            <i class="fa-solid fa-flag-checkered" style="font-size: 0.75rem;"></i>
+                        </div>
+                        <p class="fw-bold text-muted mb-0 pt-1">Journey Complete</p>
+                    </div>
+                </div>
+            {% else %}
+                <div class="text-center py-5">
+                    <div class="d-inline-block bg-primary bg-opacity-10 text-primary rounded-circle p-4 mb-4 mx-auto">
+                        <i class="fa-solid fa-map-location-dot fs-1"></i>
+                    </div>
+                    <h5 class="fw-bold text-dark">Blank Canvas</h5>
+                    <p class="text-muted mb-4 max-w-md mx-auto">Build your itinerary by searching and adding your first destination.</p>
+                    <button class="btn btn-primary rounded-pill px-4 shadow-sm" data-bs-toggle="modal" data-bs-target="#addStopModal">
+                        Search Destination
+                    </button>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+    
+    <!-- Sidebar -->
+    <div class="col-lg-4">
+        <!-- Interactive Map Placeholder -->
+        <div class="card border-0 shadow-sm p-3 mb-4" style="border-radius: var(--border-radius); background: white;">
+            <h6 class="fw-bold mb-3 px-2">Route Map Overview</h6>
+            <div class="bg-light rounded-3 d-flex align-items-center justify-content-center" style="height: 300px; border: 1px dashed var(--border-color);">
+                <div class="text-center text-muted">
+                    <i class="fa-solid fa-map fs-1 mb-2 opacity-50"></i>
+                    <p class="fw-medium mb-0">Interactive Map Tracking</p>
+                    <small>Route is visualized here</small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Stop Modal (City Search) -->
+<div class="modal fade" id="addStopModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-0 shadow-lg" style="border-radius: var(--border-radius);">
+      <div class="modal-header border-bottom-0 pb-0 pt-4 px-4">
+        <h4 class="modal-title fw-bold">Search Destination</h4>
+        <button type="button" class="btn-close shadow-none" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body p-4">
+        <form id="addStopForm">
+            <div class="row mb-4 g-3">
+                <div class="col-md-6">
+                    <label class="form-label fw-bold text-dark">City Name</label>
+                    <input type="text" class="form-control bg-light" id="stopCity" placeholder="e.g., London" required>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label fw-bold text-dark">Country</label>
+                    <input type="text" class="form-control bg-light" id="stopCountry" placeholder="e.g., UK" required>
+                </div>
+            </div>
+
+            <div class="row mb-2 g-3">
+                <div class="col-6">
+                    <label class="form-label fw-bold text-dark">Arrival Date</label>
+                    <input type="date" class="form-control bg-light" id="stopStart" required>
+                </div>
+                <div class="col-6">
+                    <label class="form-label fw-bold text-dark">Departure Date</label>
+                    <input type="date" class="form-control bg-light" id="stopEnd" required>
+                </div>
+            </div>
+        </form>
+      </div>
+      <div class="modal-footer border-top-0 pt-0 pb-4 px-4 d-flex justify-content-between">
+        <button type="button" class="btn btn-light rounded-pill px-4 fw-medium text-muted" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-primary rounded-pill px-4 fw-bold shadow-sm" onclick="submitStop()" id="addStopBtn">Add to Route <i class="fa-solid fa-check ms-1"></i></button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Add Activity Modal (Activity Search) -->
+<div class="modal fade" id="addActivityModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content border-0 shadow-lg" style="border-radius: var(--border-radius);">
+      <div class="modal-header border-bottom-0 pb-0 pt-4 px-4">
+        <div>
+            <h4 class="modal-title fw-bold">Discover Activities</h4>
+            <p class="text-muted mb-0 small" id="activityModalSubtitle">Find things to do</p>
+        </div>
+        <button type="button" class="btn-close shadow-none" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body p-4">
+        <input type="hidden" id="currentStopId">
+        
+        <!-- Activity Search Bar -->
+        <div class="input-group mb-4">
+            <span class="input-group-text bg-light border-end-0 text-muted"><i class="fa-solid fa-magnifying-glass"></i></span>
+            <input type="text" class="form-control bg-light border-start-0 ps-0" placeholder="Search experiences, tours, or food...">
+        </div>
+
+        <h6 class="fw-bold mb-3">Popular in this destination</h6>
+        <div class="row g-3 mb-4">
+            <div class="col-md-4">
+                <div class="activity-browse-item" onclick="selectActivity(this, 'Sightseeing Tour', 'Guided city highlights', 45, 'Sightseeing')">
+                    <i class="fa-solid fa-camera fs-3 text-primary mb-2"></i>
+                    <strong class="d-block text-dark">Sightseeing Tour</strong>
+                    <small class="text-muted d-block">Est. ₹45</small>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="activity-browse-item" onclick="selectActivity(this, 'Local Food Tasting', 'Explore traditional cuisine', 60, 'Food')">
+                    <i class="fa-solid fa-utensils fs-3 text-warning mb-2"></i>
+                    <strong class="d-block text-dark">Local Food Tasting</strong>
+                    <small class="text-muted d-block">Est. ₹60</small>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="activity-browse-item" onclick="selectActivity(this, 'Museum Pass', 'Access to top museums', 30, 'Sightseeing')">
+                    <i class="fa-solid fa-building-columns fs-3 text-info mb-2"></i>
+                    <strong class="d-block text-dark">Museum Pass</strong>
+                    <small class="text-muted d-block">Est. ₹30</small>
+                </div>
+            </div>
+        </div>
+        
+        <hr class="opacity-25 mb-4">
+        
+        <h6 class="fw-bold mb-3">Or create custom activity</h6>
+        <div class="row g-3">
+            <div class="col-md-6">
+                <input type="text" class="form-control bg-light" id="customActivityTitle" placeholder="Activity Name">
+            </div>
+            <div class="col-md-3">
+                <select class="form-select bg-light" id="customActivityCategory">
+                    <option value="Sightseeing">Sightseeing</option>
+                    <option value="Food">Food</option>
+                    <option value="Adventure">Adventure</option>
+                    <option value="General">General</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <input type="number" class="form-control bg-light" id="customActivityCost" placeholder="Est. Cost (₹)">
+            </div>
+        </div>
+
+      </div>
+      <div class="modal-footer border-top-0 pt-0 pb-4 px-4 d-flex justify-content-between">
+        <button type="button" class="btn btn-light rounded-pill px-4 fw-medium text-muted" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-primary rounded-pill px-4 fw-bold shadow-sm" onclick="submitActivity()">Add to Itinerary <i class="fa-solid fa-check ms-1"></i></button>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// CITY SEARCH LOGIC REMOVED - using direct inputs now
+
+async function submitStop() {
+    const btn = event.target;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> Saving...';
+    btn.disabled = true;
+
+    const data = {
+        city: document.getElementById('stopCity').value,
+        country: document.getElementById('stopCountry').value,
+        start_date: document.getElementById('stopStart').value,
+        end_date: document.getElementById('stopEnd').value
+    };
+    
+    if(!data.city || !data.start_date || !data.end_date) {
+        alert("Please select a city and dates.");
+        btn.innerHTML = 'Add to Route <i class="fa-solid fa-check ms-1"></i>';
+        btn.disabled = false;
+        return;
+    }
+
+    try {
+        const tripId = document.getElementById('tripDataContainer').getAttribute('data-trip-id');
+        const response = await fetch(`/trips/api/${tripId}/stops`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(data)
+        });
+        if (response.ok) window.location.reload();
+        else alert("Error adding destination");
+    } catch (e) {
+        alert("Error adding destination");
+    }
+}
+
+// ACTIVITY SEARCH LOGIC
+let selectedActivityData = null;
+
+function openActivityModal(stopId, cityName) {
+    document.getElementById('currentStopId').value = stopId;
+    document.getElementById('activityModalSubtitle').textContent = `Find things to do in ${cityName}`;
+    
+    // reset
+    selectedActivityData = null;
+    document.querySelectorAll('.activity-browse-item').forEach(el => el.classList.remove('selected'));
+    document.getElementById('customActivityTitle').value = '';
+    document.getElementById('customActivityCost').value = '';
+    
+    new bootstrap.Modal(document.getElementById('addActivityModal')).show();
+}
+
+function selectActivity(element, title, description, cost, category) {
+    document.querySelectorAll('.activity-browse-item').forEach(el => el.classList.remove('selected'));
+    element.classList.add('selected');
+    
+    selectedActivityData = {
+        title: title,
+        description: description,
+        estimated_cost: cost,
+        category: category
+    };
+    
+    // clear custom
+    document.getElementById('customActivityTitle').value = '';
+}
+
+async function submitActivity() {
+    const stopId = document.getElementById('currentStopId').value;
+    const customTitle = document.getElementById('customActivityTitle').value;
+    
+    let payload;
+    if (customTitle) {
+        payload = {
+            title: customTitle,
+            category: document.getElementById('customActivityCategory').value,
+            estimated_cost: document.getElementById('customActivityCost').value || 0,
+            description: ''
+        };
+    } else if (selectedActivityData) {
+        payload = selectedActivityData;
+    } else {
+        alert("Please select or create an activity.");
+        return;
+    }
+
+    try {
+        const tripId = document.getElementById('tripDataContainer').getAttribute('data-trip-id');
+        const response = await fetch(`/trips/api/${tripId}/stops/${stopId}/activities`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(payload)
+        });
+        if (response.ok) window.location.reload();
+        else alert("Error adding activity");
+    } catch (e) {
+        alert("Error adding activity");
+    }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('.open-activity-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const stopId = e.currentTarget.getAttribute('data-stop-id');
+            const cityName = e.currentTarget.getAttribute('data-city-name');
+            openActivityModal(stopId, cityName);
+        });
+    });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,504 @@
+{% extends "base.html" %}
+{% block title %}Dashboard - Traveloop{% endblock %}
+
+{% block extra_css %}
+<style>
+/* Dashboard specific styles */
+.hero-stats {
+    display: flex;
+    gap: 2rem;
+    margin-top: 1.5rem;
+}
+.hero-stat-item {
+    background: rgba(255,255,255,0.1);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    padding: 0.75rem 1.25rem;
+    border-radius: var(--border-radius-sm);
+    border: 1px solid rgba(255,255,255,0.2);
+}
+.stat-card {
+    border-left: 4px solid var(--border-color);
+    transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
+}
+.stat-card:hover {
+    border-left-color: var(--primary);
+}
+.stat-icon-wrapper {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+}
+.quick-action-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    padding: 1.25rem 1rem;
+    background: var(--surface);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-sm);
+    color: var(--text-main);
+    text-decoration: none;
+    transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
+    font-weight: 500;
+    font-size: 0.9rem;
+}
+.quick-action-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-sm);
+    border-color: var(--primary);
+    color: var(--primary);
+}
+.quick-action-btn i {
+    font-size: 1.5rem;
+    color: var(--primary);
+}
+.insight-card {
+    border-left: 3px solid var(--primary);
+    background: var(--surface);
+}
+.insight-card.success { border-left-color: var(--success); }
+.insight-card.warning { border-left-color: var(--warning); }
+.insight-card.danger { border-left-color: var(--danger); }
+
+.weather-card {
+    position: relative;
+    border-radius: var(--border-radius-sm);
+    overflow: hidden;
+    color: white;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    min-height: 80px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+.weather-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background-size: cover;
+    background-position: center;
+    filter: brightness(0.6);
+    z-index: 0;
+}
+.weather-content {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.timeline {
+    position: relative;
+    padding-left: 1.5rem;
+}
+.timeline::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: var(--border-color);
+}
+.timeline-item {
+    position: relative;
+    margin-bottom: 1.5rem;
+}
+.timeline-dot {
+    position: absolute;
+    left: -1.85rem;
+    top: 0.25rem;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: var(--surface);
+    border: 2px solid var(--primary);
+}
+.nav-pills .nav-link {
+    color: var(--text-muted);
+    border-radius: 20px;
+    padding: 0.4rem 1rem;
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+.nav-pills .nav-link.active {
+    background-color: rgba(91, 76, 240, 0.1);
+    color: var(--primary);
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<div class="dashboard-hero text-white mb-4 d-flex align-items-center">
+    <div style="z-index: 1; width: 100%;">
+        <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
+            <div>
+                <h1 class="fw-bold mb-2" style="font-size: 2.2rem;">Ready for your next adventure, {{ user.username }}?</h1>
+                <p class="fs-6 opacity-75 mb-0"><i class="fa-solid fa-map-pin me-2"></i>You have <strong>{{ trips|length if trips else 0 }}</strong> destinations planned this month.</p>
+                <div class="hero-stats">
+                    <div class="hero-stat-item">
+                        <span class="d-block small opacity-75 text-uppercase tracking-wider fw-bold">Next Trip In</span>
+                        <span class="fs-5 fw-bold">8 Days</span>
+                    </div>
+                    <div class="hero-stat-item">
+                        <span class="d-block small opacity-75 text-uppercase tracking-wider fw-bold">Est. Budget</span>
+                        <span class="fs-5 fw-bold">₹2,450</span>
+                    </div>
+                </div>
+            </div>
+            <div class="text-end text-md-start">
+                <a href="{{ url_for('trips.create_trip') }}" class="btn btn-primary btn-lg rounded-pill px-4 shadow-sm fw-bold">
+                    <i class="fa-solid fa-plus me-2"></i> Plan a New Trip
+                </a>
+                <p class="small opacity-50 mt-3 fst-italic max-w-sm">"The world is a book and those who do not travel read only one page."</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Stats Cards Grid -->
+<div class="row g-3 mb-4">
+    <!-- Total Trips -->
+    <div class="col-md-4 col-lg-2">
+        <div class="card stat-card border-0 p-3 shadow-sm h-100">
+            <div class="d-flex justify-content-between align-items-start mb-2">
+                <div class="stat-icon-wrapper bg-primary bg-opacity-10 text-primary">
+                    <i class="fa-solid fa-plane"></i>
+                </div>
+                <span class="badge bg-success bg-opacity-10 text-success rounded-pill small"><i class="fa-solid fa-arrow-up me-1"></i>12%</span>
+            </div>
+            <h3 class="fw-bold mb-0">{{ total_trips }}</h3>
+            <p class="text-muted small fw-medium mb-0">Total Trips</p>
+        </div>
+    </div>
+    <!-- Countries Visited -->
+    <div class="col-md-4 col-lg-2">
+        <div class="card stat-card border-0 p-3 shadow-sm h-100" style="border-left-color: var(--success);">
+            <div class="d-flex justify-content-between align-items-start mb-2">
+                <div class="stat-icon-wrapper bg-success bg-opacity-10 text-success">
+                    <i class="fa-solid fa-earth-americas"></i>
+                </div>
+            </div>
+            <h3 class="fw-bold mb-0">{{ trips|length if trips else 0 }}</h3>
+            <p class="text-muted small fw-medium mb-0">Countries Visited</p>
+        </div>
+    </div>
+    <!-- Activities Planned -->
+    <div class="col-md-4 col-lg-2">
+        <div class="card stat-card border-0 p-3 shadow-sm h-100" style="border-left-color: var(--warning);">
+            <div class="d-flex justify-content-between align-items-start mb-2">
+                <div class="stat-icon-wrapper bg-warning bg-opacity-10 text-warning">
+                    <i class="fa-solid fa-calendar-check"></i>
+                </div>
+                <span class="badge bg-primary bg-opacity-10 text-primary rounded-pill small">+3 New</span>
+            </div>
+            <h3 class="fw-bold mb-0">12</h3>
+            <p class="text-muted small fw-medium mb-0">Activities Planned</p>
+        </div>
+    </div>
+    <!-- Total Budget -->
+    <div class="col-md-4 col-lg-2">
+        <div class="card stat-card border-0 p-3 shadow-sm h-100" style="border-left-color: var(--danger);">
+            <div class="d-flex justify-content-between align-items-start mb-2">
+                <div class="stat-icon-wrapper bg-danger bg-opacity-10 text-danger">
+                    <i class="fa-solid fa-wallet"></i>
+                </div>
+                <span class="badge bg-success bg-opacity-10 text-success rounded-pill small">-5%</span>
+            </div>
+            <h3 class="fw-bold mb-0">₹4,250</h3>
+            <p class="text-muted small fw-medium mb-0">Total Budget</p>
+        </div>
+    </div>
+    <!-- Upcoming Flights -->
+    <div class="col-md-4 col-lg-2">
+        <div class="card stat-card border-0 p-3 shadow-sm h-100" style="border-left-color: #8B5CF6;">
+            <div class="d-flex justify-content-between align-items-start mb-2">
+                <div class="stat-icon-wrapper bg-opacity-10 text-primary" style="background-color: rgba(139, 92, 246, 0.1); color: #8B5CF6;">
+                    <i class="fa-solid fa-ticket"></i>
+                </div>
+            </div>
+            <h3 class="fw-bold mb-0">2</h3>
+            <p class="text-muted small fw-medium mb-0">Upcoming Flights</p>
+        </div>
+    </div>
+    <!-- Saved Destinations -->
+    <div class="col-md-4 col-lg-2">
+        <div class="card stat-card border-0 p-3 shadow-sm h-100" style="border-left-color: #EC4899;">
+            <div class="d-flex justify-content-between align-items-start mb-2">
+                <div class="stat-icon-wrapper bg-opacity-10" style="background-color: rgba(236, 72, 153, 0.1); color: #EC4899;">
+                    <i class="fa-solid fa-heart"></i>
+                </div>
+            </div>
+            <h3 class="fw-bold mb-0">8</h3>
+            <p class="text-muted small fw-medium mb-0">Saved Spots</p>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- Left Column (Main Content) -->
+    <div class="col-lg-8">
+        
+        <!-- Travel Insights AI Section -->
+        <h5 class="fw-bold m-0 mb-3 d-flex align-items-center gap-2"><i class="fa-solid fa-sparkles text-primary"></i> Travel Insights</h5>
+        <div class="row g-3 mb-4">
+            <div class="col-md-6">
+                <div class="insight-card success rounded-3 p-3 shadow-sm d-flex gap-3 align-items-start">
+                    <div class="text-success mt-1"><i class="fa-solid fa-circle-check"></i></div>
+                    <div>
+                        <h6 class="fw-bold mb-1 fs-6">Budget on Track</h6>
+                        <p class="mb-0 small text-muted">Your Paris trip is 12% under budget. You have ₹450 remaining for activities.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="insight-card warning rounded-3 p-3 shadow-sm d-flex gap-3 align-items-start">
+                    <div class="text-warning mt-1"><i class="fa-solid fa-triangle-exclamation"></i></div>
+                    <div>
+                        <h6 class="fw-bold mb-1 fs-6">Packing Incomplete</h6>
+                        <p class="mb-0 small text-muted">Your packing checklist for "Euro Trip" is only 40% complete. Flight is in 8 days.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Upcoming Trips -->
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h5 class="fw-bold m-0">Upcoming Trips</h5>
+            <a href="{{ url_for('trips.list_trips') }}" class="btn btn-sm btn-light rounded-pill px-3 fw-medium">View All</a>
+        </div>
+        
+        {% if trips %}
+            <div class="row g-3 mb-4">
+            {% for trip in trips %}
+                <div class="col-md-6">
+                    <div class="card border-0 shadow-sm h-100 card-hover">
+                        <div class="card-body p-0 d-flex flex-column">
+                            <div class="position-relative" style="height: 120px;">
+                                <div class="w-100 h-100" style="background: url('https://images.unsplash.com/photo-1499856871958-5b9627545d1a?auto=format&fit=crop&w=600&q=80') center/cover;"></div>
+                                <div class="position-absolute top-0 start-0 w-100 h-100" style="background: linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(0,0,0,0.6) 100%);"></div>
+                                <span class="badge bg-white text-dark position-absolute top-0 end-0 m-2 shadow-sm fw-bold px-2 py-1 rounded-2 small">
+                                    <i class="fa-regular fa-clock text-primary me-1"></i> In 8 days
+                                </span>
+                                <h5 class="fw-bold mb-0 text-white position-absolute bottom-0 start-0 m-3">{{ trip.name }}</h5>
+                            </div>
+                            <div class="p-3 flex-grow-1 d-flex flex-column justify-content-between">
+                                <div class="mb-3">
+                                    <div class="d-flex align-items-center gap-2 mb-2">
+                                        <i class="fa-regular fa-calendar text-muted"></i>
+                                        <span class="small fw-medium text-dark">{{ trip.start_date.strftime('%b %d') }} - {{ trip.end_date.strftime('%b %d, %Y') }}</span>
+                                    </div>
+                                    <div class="progress" style="height: 6px;">
+                                        <div class="progress-bar bg-success" role="progressbar" style="width: 65%;"></div>
+                                    </div>
+                                    <div class="d-flex justify-content-between mt-1">
+                                        <span class="small text-muted" style="font-size: 0.7rem;">Planning Progress</span>
+                                        <span class="small text-muted fw-bold" style="font-size: 0.7rem;">65%</span>
+                                    </div>
+                                </div>
+                                <div class="d-flex gap-2">
+                                    <a href="{{ url_for('trips.view_trip', trip_id=trip.id) }}" class="btn btn-primary btn-sm flex-grow-1 fw-medium">Workspace</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+            </div>
+        {% else %}
+            <div class="card border-0 shadow-sm p-5 text-center bg-white mb-4">
+                <div class="mx-auto bg-light rounded-circle d-flex align-items-center justify-content-center mb-3" style="width: 80px; height: 80px;">
+                    <i class="fa-solid fa-compass text-primary fs-2"></i>
+                </div>
+                <h5 class="text-dark fw-bold">No trips on the horizon</h5>
+                <p class="text-muted mb-4 max-w-md mx-auto">Your travel workspace is waiting. Start planning your next corporate or personal adventure today to unlock insights.</p>
+                <div>
+                    <a href="{{ url_for('trips.create_trip') }}" class="btn btn-primary rounded-pill px-4 py-2 fw-bold shadow-sm">Create First Trip</a>
+                </div>
+            </div>
+        {% endif %}
+
+        <!-- Recent Activity -->
+        <h5 class="fw-bold mb-3">Recent Activity</h5>
+        <div class="card border-0 shadow-sm p-4">
+            <div class="timeline">
+                <div class="timeline-item">
+                    <div class="timeline-dot border-success"></div>
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <p class="mb-0 fw-bold text-dark fs-6">Eiffel Tower Tour Booked <span class="badge badge-soft-success ms-2">Activity</span></p>
+                            <p class="small text-muted mb-0 mt-1">Added by you in "Euro Trip 2026"</p>
+                        </div>
+                        <span class="small text-muted fw-medium">2h ago</span>
+                    </div>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-dot border-primary"></div>
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <p class="mb-0 fw-bold text-dark fs-6">Flight to Paris <span class="badge badge-soft-primary ms-2">Expense</span></p>
+                            <p class="small text-muted mb-0 mt-1">Logged ₹850.00 estimated cost</p>
+                        </div>
+                        <span class="small text-muted fw-medium">Yesterday</span>
+                    </div>
+                </div>
+                <div class="timeline-item mb-0">
+                    <div class="timeline-dot border-warning"></div>
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <p class="mb-0 fw-bold text-dark fs-6">Packing List Updated <span class="badge badge-soft-warning ms-2">Task</span></p>
+                            <p class="small text-muted mb-0 mt-1">Marked "Passport" and "Adapter" as packed</p>
+                        </div>
+                        <span class="small text-muted fw-medium">2 days ago</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Right Column (Side Widgets) -->
+    <div class="col-lg-4">
+        
+        <!-- Quick Actions Panel -->
+        <h5 class="fw-bold mb-3">Quick Actions</h5>
+        <div class="row g-2 mb-4">
+            <div class="col-6">
+                <a href="{{ url_for('trips.create_trip') }}" class="quick-action-btn">
+                    <i class="fa-solid fa-map-location-dot"></i>
+                    <span>New Trip</span>
+                </a>
+            </div>
+            <div class="col-6">
+                <a href="#" class="quick-action-btn">
+                    <i class="fa-solid fa-receipt"></i>
+                    <span>Log Expense</span>
+                </a>
+            </div>
+            <div class="col-6">
+                <a href="#" class="quick-action-btn">
+                    <i class="fa-regular fa-calendar-plus"></i>
+                    <span>Add Activity</span>
+                </a>
+            </div>
+            <div class="col-6">
+                <a href="#" class="quick-action-btn">
+                    <i class="fa-solid fa-user-plus"></i>
+                    <span>Invite Team</span>
+                </a>
+            </div>
+        </div>
+
+        <!-- Budget Analytics -->
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h5 class="fw-bold m-0">Budget Analytics</h5>
+        </div>
+        <div class="card border-0 p-4 mb-4 shadow-sm">
+            <ul class="nav nav-pills mb-3 gap-1 bg-light p-1 rounded-pill d-inline-flex" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active rounded-pill px-3 py-1" data-bs-toggle="pill" type="button" role="tab">All</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link rounded-pill px-3 py-1" data-bs-toggle="pill" type="button" role="tab">Monthly</button>
+                </li>
+            </ul>
+            
+            <div class="mb-4 text-center">
+                <h2 class="fw-bold text-dark mb-0">₹4,250</h2>
+                <p class="text-muted small fw-medium">Total Spent</p>
+                <span class="badge badge-soft-success rounded-pill px-2 py-1 small">You spent 12% less than planned</span>
+            </div>
+
+            <div style="position: relative; height: 200px; width: 100%;">
+                <canvas id="mainBudgetChart"></canvas>
+            </div>
+            
+            <div class="mt-4 pt-3 border-top">
+                <div class="d-flex justify-content-between mb-2">
+                    <span class="small fw-medium text-dark"><i class="fa-solid fa-bed text-primary me-2"></i>Stay</span>
+                    <span class="small fw-bold">₹1,450</span>
+                </div>
+                <div class="d-flex justify-content-between mb-2">
+                    <span class="small fw-medium text-dark"><i class="fa-solid fa-plane text-success me-2"></i>Transport</span>
+                    <span class="small fw-bold">₹850</span>
+                </div>
+                <div class="d-flex justify-content-between">
+                    <span class="small fw-medium text-dark"><i class="fa-solid fa-utensils text-warning me-2"></i>Food</span>
+                    <span class="small fw-bold">₹600</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Compact Weather Cards -->
+        <h5 class="fw-bold mb-3">Weather Preview</h5>
+        
+        <div class="weather-card shadow-sm" style="background-image: url('https://images.unsplash.com/photo-1502602898657-3e91760cbb34?auto=format&fit=crop&w=400&q=80');">
+            <div class="weather-content">
+                <div>
+                    <h6 class="fw-bold mb-0 fs-5">Paris, FR</h6>
+                    <p class="mb-0 small opacity-75">10:30 AM • Perfect for sightseeing</p>
+                </div>
+                <div class="text-end d-flex align-items-center gap-2">
+                    <i class="fa-solid fa-cloud-sun fs-2"></i>
+                    <h4 class="fw-bold mb-0">22°</h4>
+                </div>
+            </div>
+        </div>
+
+        <div class="weather-card shadow-sm" style="background-image: url('https://images.unsplash.com/photo-1517736996303-4e64a4f87311?auto=format&fit=crop&w=400&q=80');">
+            <div class="weather-content">
+                <div>
+                    <h6 class="fw-bold mb-0 fs-5">Amsterdam, NL</h6>
+                    <p class="mb-0 small opacity-75">10:30 AM • Light rain expected</p>
+                </div>
+                <div class="text-end d-flex align-items-center gap-2">
+                    <i class="fa-solid fa-cloud-rain fs-2"></i>
+                    <h4 class="fw-bold mb-0">16°</h4>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    const ctx = document.getElementById('mainBudgetChart');
+    if (ctx) {
+        new Chart(ctx.getContext('2d'), {
+            type: 'doughnut',
+            data: {
+                labels: ['Stay', 'Transport', 'Food', 'Activities', 'Other'],
+                datasets: [{
+                    data: [1450, 850, 600, 1050, 300],
+                    backgroundColor: [
+                        '#5B4CF0', '#10B981', '#F59E0B', '#EF4444', '#6B7280'
+                    ],
+                    borderWidth: 0,
+                    hoverOffset: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                cutout: '80%',
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                }
+            }
+        });
+    }
+</script>
+{% endblock %}

@@ -1,0 +1,122 @@
+{% extends "base.html" %}
+{% block title %}{{ trip.name }} - Overview{% endblock %}
+
+{% block content %}
+<!-- Premium Trip Header -->
+<div class="card border-0 mb-4 overflow-hidden shadow-sm" style="border-radius: var(--border-radius);">
+    <div style="height: 240px; background: url('https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?auto=format&fit=crop&w=1200&q=80') center/cover; position: relative;">
+        <div class="position-absolute top-0 start-0 w-100 h-100" style="background: linear-gradient(to right, rgba(17, 24, 39, 0.8), rgba(17, 24, 39, 0.2));"></div>
+        <div class="position-absolute bottom-0 start-0 p-5 text-white w-100">
+            <div class="d-flex justify-content-between align-items-end">
+                <div>
+                    <span class="badge bg-primary px-3 py-2 rounded-pill fw-bold mb-3 shadow-sm d-inline-flex align-items-center gap-2">
+                        <span class="bg-white rounded-circle" style="width: 6px; height: 6px;"></span> Active Trip
+                    </span>
+                    <h1 class="fw-bold mb-2">{{ trip.name }}</h1>
+                    <p class="mb-0 fs-5 opacity-75"><i class="fa-regular fa-calendar-days me-2"></i>{{ trip.start_date.strftime('%B %d') }} - {{ trip.end_date.strftime('%B %d, %Y') }}</p>
+                </div>
+                <div class="d-flex gap-2">
+                    <a href="{{ url_for('trips.public_view', trip_id=trip.id) }}" target="_blank" class="btn btn-light bg-white text-dark rounded-pill shadow-sm fw-bold px-4"><i class="fa-solid fa-share-nodes me-2"></i> Share</a>
+                    <button class="btn btn-primary rounded-pill shadow-sm fw-bold px-4"><i class="fa-solid fa-pen me-2"></i> Edit</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- SaaS Navigation Tabs -->
+<ul class="nav nav-pills mb-4 bg-white p-2 rounded-pill shadow-sm border" style="width: max-content;">
+    <li class="nav-item">
+        <a class="nav-link active rounded-pill px-4 fw-medium" href="{{ url_for('trips.view_trip', trip_id=trip.id) }}"><i class="fa-solid fa-table-columns me-2"></i> Overview</a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link text-dark rounded-pill px-4 fw-medium" href="{{ url_for('trips.itinerary', trip_id=trip.id) }}"><i class="fa-solid fa-route me-2"></i> Itinerary</a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link text-dark rounded-pill px-4 fw-medium" href="{{ url_for('trips.budget', trip_id=trip.id) }}"><i class="fa-solid fa-chart-pie me-2"></i> Finances</a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link text-dark rounded-pill px-4 fw-medium" href="{{ url_for('trips.packing', trip_id=trip.id) }}"><i class="fa-solid fa-clipboard-check me-2"></i> Tasks & Packing</a>
+    </li>
+</ul>
+
+<div class="row g-4">
+    <!-- Main Content Left -->
+    <div class="col-lg-8">
+        <!-- About Section -->
+        <div class="card border-0 shadow-sm p-4 mb-4" style="border-radius: var(--border-radius-sm);">
+            <h5 class="fw-bold mb-3 d-flex align-items-center gap-2"><i class="fa-solid fa-circle-info text-primary"></i> Trip Briefing</h5>
+            <p class="text-muted mb-0" style="line-height: 1.6;">{{ trip.description or "No description provided. Add a brief to share the core objective of this journey with your team." }}</p>
+        </div>
+
+        <!-- Destinations Quick View -->
+        <div class="card border-0 shadow-sm p-4 mb-4" style="border-radius: var(--border-radius-sm);">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h5 class="fw-bold mb-0 d-flex align-items-center gap-2"><i class="fa-solid fa-location-dot text-primary"></i> Destinations</h5>
+                <a href="{{ url_for('trips.itinerary', trip_id=trip.id) }}" class="btn btn-sm btn-light rounded-pill fw-medium text-primary">Manage Route</a>
+            </div>
+            
+            {% if trip.stops %}
+            <div class="d-flex gap-3 overflow-auto pb-2">
+                {% for stop in trip.stops %}
+                <div class="card border border-light flex-shrink-0" style="width: 200px; border-radius: 12px; background: #F9FAFB;">
+                    <div class="card-body p-3">
+                        <div class="d-flex justify-content-between mb-2">
+                            <span class="badge badge-soft-primary rounded-pill">Stop {{ stop.order }}</span>
+                        </div>
+                        <h6 class="fw-bold mb-1 text-dark">{{ stop.city }}</h6>
+                        <p class="text-muted small mb-0">{{ stop.country }}</p>
+                        <hr class="my-2 opacity-25">
+                        <p class="text-muted small fw-medium mb-0"><i class="fa-regular fa-clock me-1"></i> {{ (stop.end_date - stop.start_date).days }} Days</p>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="text-center py-4 bg-light rounded-3 border-dashed">
+                <p class="text-muted mb-3">No destinations mapped out yet.</p>
+                <a href="{{ url_for('trips.itinerary', trip_id=trip.id) }}" class="btn btn-sm btn-primary rounded-pill">Build Itinerary</a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Sidebar Right -->
+    <div class="col-lg-4">
+        <!-- Team / Collaboration -->
+        <div class="card border-0 shadow-sm p-4 mb-4" style="border-radius: var(--border-radius-sm);">
+            <h5 class="fw-bold mb-3">Collaborators</h5>
+            <div class="d-flex align-items-center gap-3 mb-3">
+                <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center fw-bold" style="width: 40px; height: 40px;">
+                    {{ trip.owner.username[0]|upper }}
+                </div>
+                <div>
+                    <h6 class="fw-bold mb-0">{{ trip.owner.username }}</h6>
+                    <small class="text-muted">Owner (You)</small>
+                </div>
+            </div>
+            <button class="btn btn-light w-100 border-dashed fw-medium text-primary rounded-pill mt-2">
+                <i class="fa-solid fa-plus me-2"></i> Invite Members
+            </button>
+        </div>
+
+        <!-- Budget Quick Stats -->
+        <div class="card border-0 shadow-sm p-4" style="border-radius: var(--border-radius-sm); background: var(--gradient-accent); color: white;">
+            <h5 class="fw-bold mb-4">Financial Overview</h5>
+            <div class="mb-3">
+                <p class="mb-1 opacity-75 small text-uppercase tracking-wider fw-bold">Total Budget</p>
+                <h2 class="fw-bold mb-0">₹5,000.00</h2>
+            </div>
+            <div>
+                <p class="mb-1 opacity-75 small text-uppercase tracking-wider fw-bold">Tracked Expenses</p>
+                <h4 class="fw-bold mb-0">₹4,250.00</h4>
+            </div>
+            <div class="mt-4 pt-3 border-top border-white border-opacity-25">
+                <a href="{{ url_for('trips.budget', trip_id=trip.id) }}" class="text-white text-decoration-none fw-medium w-100 d-block text-center">
+                    Open Finance Dashboard <i class="fa-solid fa-arrow-right ms-2"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

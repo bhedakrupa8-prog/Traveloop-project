@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+{% block title %}Traveloop - Premium Travel Management{% endblock %}
+
+{% block public_content %}
+<div class="row align-items-center py-5">
+    <div class="col-lg-6 mb-5 mb-lg-0 pe-lg-5">
+        <span class="badge bg-primary bg-opacity-10 text-primary rounded-pill px-3 py-2 fw-bold mb-4 tracking-wider text-uppercase shadow-sm">🚀 The Next Gen Travel SaaS</span>
+        <h1 class="display-4 fw-bold text-dark mb-4" style="letter-spacing: -0.03em; line-height: 1.1;">Orchestrate your journeys perfectly.</h1>
+        <p class="fs-5 text-muted mb-5" style="line-height: 1.6;">Traveloop is the ultimate command center for modern travelers and organizations. Build collaborative itineraries, track global expenses, and travel with unprecedented clarity.</p>
+        <div class="d-flex flex-column flex-sm-row gap-3">
+            <a href="{{ url_for('auth.register') }}" class="btn btn-primary btn-lg rounded-pill px-5 fw-bold shadow-sm">Start Planning Free</a>
+            <a href="{{ url_for('auth.login') }}" class="btn btn-light border btn-lg rounded-pill px-5 fw-bold text-dark shadow-sm">Sign In</a>
+        </div>
+        <p class="small text-muted mt-4"><i class="fa-solid fa-check text-success me-2"></i> No credit card required. Free for personal use.</p>
+    </div>
+    <div class="col-lg-6 position-relative">
+        <div class="position-absolute bg-primary rounded-circle" style="width: 400px; height: 400px; top: -50px; right: -50px; opacity: 0.1; filter: blur(60px); z-index: 0;"></div>
+        <div class="card border-0 shadow-hover p-2 bg-white" style="border-radius: var(--border-radius); z-index: 1; position: relative; background: rgba(255, 255, 255, 0.6); backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.8);">
+            <img src="https://images.unsplash.com/photo-1436491865332-7a61a109cc05?auto=format&fit=crop&w=1000&q=80" alt="Traveloop Dashboard Preview" class="img-fluid rounded-3 shadow-sm">
+        </div>
+        
+        <!-- Floating Elements -->
+        <div class="card border-0 shadow-lg position-absolute p-3 rounded-4 bg-white" style="bottom: 40px; left: -30px; z-index: 2; width: 220px;">
+            <div class="d-flex align-items-center gap-3">
+                <div class="bg-success bg-opacity-10 text-success rounded-circle d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                    <i class="fa-solid fa-wallet"></i>
+                </div>
+                <div>
+                    <h6 class="fw-bold mb-0">Under Budget</h6>
+                    <small class="text-success fw-bold">15% saved</small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="py-5 mt-5 border-top">
+    <div class="text-center mb-5">
+        <h6 class="text-uppercase tracking-wider text-muted fw-bold mb-3">Trusted by global travelers</h6>
+        <h2 class="fw-bold text-dark">Everything you need, in one workspace.</h2>
+    </div>
+    <div class="row g-4">
+        <div class="col-md-4">
+            <div class="card h-100 border-0 p-4 bg-light bg-opacity-50 card-hover" style="border-radius: var(--border-radius-sm);">
+                <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center mb-4 shadow-sm" style="width: 48px; height: 48px;">
+                    <i class="fa-solid fa-route"></i>
+                </div>
+                <h5 class="fw-bold text-dark mb-2">Visual Itineraries</h5>
+                <p class="text-muted mb-0">Drag-and-drop your way to the perfect trip timeline. Say goodbye to messy spreadsheets.</p>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card h-100 border-0 p-4 bg-light bg-opacity-50 card-hover" style="border-radius: var(--border-radius-sm);">
+                <div class="bg-warning text-white rounded-circle d-flex align-items-center justify-content-center mb-4 shadow-sm" style="width: 48px; height: 48px;">
+                    <i class="fa-solid fa-chart-pie"></i>
+                </div>
+                <h5 class="fw-bold text-dark mb-2">Financial Control</h5>
+                <p class="text-muted mb-0">Track estimated costs against actual spending with powerful, real-time analytics.</p>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card h-100 border-0 p-4 bg-light bg-opacity-50 card-hover" style="border-radius: var(--border-radius-sm);">
+                <div class="bg-success text-white rounded-circle d-flex align-items-center justify-content-center mb-4 shadow-sm" style="width: 48px; height: 48px;">
+                    <i class="fa-solid fa-list-check"></i>
+                </div>
+                <h5 class="fw-bold text-dark mb-2">Smart Checklists</h5>
+                <p class="text-muted mb-0">Never forget a passport or charger again with our dynamic, categorized packing lists.</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

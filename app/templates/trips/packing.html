@@ -1,0 +1,157 @@
+{% extends "base.html" %}
+{% block title %}Packing List - {{ trip.name }}{% endblock %}
+
+{% block extra_css %}
+<style>
+.packing-packed {
+    background-color: var(--border-light);
+    border: 1px solid var(--border-color) !important;
+}
+.packing-unpacked {
+    background-color: #F9FAFB;
+    border: 1px solid var(--border-color) !important;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="mb-4">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{ url_for('trips.view_trip', trip_id=trip.id) }}" class="text-decoration-none text-muted">{{ trip.name }}</a></li>
+            <li class="breadcrumb-item active text-dark fw-medium" aria-current="page">Tasks & Packing</li>
+        </ol>
+    </nav>
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <h2 class="fw-bold text-dark mb-0">Tasks & Packing</h2>
+            <p class="text-muted mb-0">Stay organized with categorized checklists.</p>
+        </div>
+    </div>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card border-0 shadow-sm p-4 p-md-5" style="border-radius: var(--border-radius);">
+            
+            <!-- Add Item Form -->
+            <form id="addPackingForm" class="d-flex flex-column flex-md-row gap-3 mb-5">
+                <input type="text" id="itemName" class="form-control form-control-lg bg-light border-0 px-4" placeholder="What do you need to bring?" style="border-radius: var(--border-radius-sm);" required>
+                <select id="itemCategory" class="form-select form-select-lg bg-light border-0" style="width: auto; min-width: 160px; border-radius: var(--border-radius-sm);">
+                    <option value="Clothing">👕 Clothing</option>
+                    <option value="Electronics">💻 Electronics</option>
+                    <option value="Documents">📁 Documents</option>
+                    <option value="Toiletries">🧴 Toiletries</option>
+                    <option value="General">🎒 General</option>
+                </select>
+                <button type="submit" class="btn btn-primary btn-lg rounded-pill px-4 shadow-sm fw-bold flex-shrink-0"><i class="fa-solid fa-plus me-1"></i> Add</button>
+            </form>
+
+            <!-- Progress Bar -->
+            {% set total_items = trip.packing_items|length %}
+            {% set packed_items = trip.packing_items|selectattr('is_packed')|list|length %}
+            {% set progress = (packed_items / total_items * 100)|round if total_items > 0 else 0 %}
+            <div class="mb-4">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="fw-bold text-dark text-uppercase tracking-wider small">Packing Progress</span>
+                    <span class="fw-bold text-primary">{{ progress }}%</span>
+                </div>
+                <div class="progress" style="height: 8px; border-radius: 4px; background-color: var(--border-light);">
+                    <div class="progress-bar bg-primary" role="progressbar" id="packingProgressBar" aria-valuenow="{{ progress }}" aria-valuemin="0" aria-valuemax="100" style="border-radius: 4px;"></div>
+                </div>
+                <script>
+                    document.getElementById('packingProgressBar').style.width = "{{ progress }}%";
+                </script>
+            </div>
+
+            <!-- Packing List -->
+            <div class="list-group list-group-flush" id="packingList">
+                {% for item in trip.packing_items %}
+                    <div class="list-group-item d-flex justify-content-between align-items-center border-0 mb-3 rounded-3 p-3 transition-all {% if item.is_packed %}packing-packed{% else %}packing-unpacked{% endif %}">
+                        <div class="form-check d-flex align-items-center m-0 w-100">
+                            <input class="form-check-input packing-checkbox border-2" type="checkbox" data-id="{{ item.id }}" id="item_{{ item.id }}" {% if item.is_packed %}checked{% endif %} style="width: 24px; height: 24px; cursor: pointer; border-color: var(--primary);">
+                            <label class="form-check-label ms-3 {% if item.is_packed %}text-decoration-line-through text-muted{% else %}fw-bold text-dark{% endif %}" for="item_{{ item.id }}" style="cursor: pointer; flex: 1; padding-top: 2px;">
+                                {{ item.item_name }}
+                            </label>
+                        </div>
+                        <span class="badge badge-soft-primary px-3 py-2 rounded-pill fw-medium flex-shrink-0">{{ item.category }}</span>
+                    </div>
+                {% endfor %}
+                {% if not trip.packing_items %}
+                    <div class="text-center py-5 border-dashed rounded-3">
+                        <i class="fa-solid fa-list-check fs-1 text-muted opacity-25 mb-3"></i>
+                        <h6 class="fw-bold text-dark mb-1">Your list is empty</h6>
+                        <p class="text-muted small mb-0">Start typing above to add your first essential item.</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.getElementById('addPackingForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const btn = this.querySelector('button[type="submit"]');
+    const originalText = btn.innerHTML;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>';
+    btn.disabled = true;
+
+    const item_name = document.getElementById('itemName').value;
+    const category = document.getElementById('itemCategory').value.replace(/[^\w\s&]/gi, '').trim();
+    
+    try {
+        const response = await fetch(`/trips/api/{{ trip.id }}/packing`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({item_name, category})
+        });
+        
+        if (response.ok) {
+            window.location.reload();
+        }
+    } catch (err) {
+        console.error(err);
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+    }
+});
+
+document.querySelectorAll('.packing-checkbox').forEach(box => {
+    box.addEventListener('change', async function() {
+        const id = this.dataset.id;
+        const label = this.nextElementSibling;
+        const container = this.closest('.list-group-item');
+        
+        try {
+            const response = await fetch(`/trips/api/packing/${id}/toggle`, {
+                method: 'POST'
+            });
+            
+            if (response.ok) {
+                const data = await response.json();
+                if (data.is_packed) {
+                    label.classList.add('text-decoration-line-through', 'text-muted');
+                    label.classList.remove('fw-bold', 'text-dark');
+                    container.classList.add('packing-packed');
+                    container.classList.remove('packing-unpacked');
+                } else {
+                    label.classList.remove('text-decoration-line-through', 'text-muted');
+                    label.classList.add('fw-bold', 'text-dark');
+                    container.classList.remove('packing-packed');
+                    container.classList.add('packing-unpacked');
+                }
+                // Option to reload for exact progress bar calculation:
+                // window.location.reload(); 
+            }
+        } catch (err) {
+            console.error(err);
+            // Revert state on error
+            this.checked = !this.checked;
+        }
+    });
+});
+</script>
+{% endblock %}

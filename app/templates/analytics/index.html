@@ -1,0 +1,179 @@
+{% extends "base.html" %}
+{% block title %}Travel Analytics - Traveloop SaaS{% endblock %}
+
+{% block content %}
+<div class="mb-4 d-flex justify-content-between align-items-center">
+    <div>
+        <h2 class="fw-bold text-dark mb-1">Travel Analytics</h2>
+        <p class="text-muted mb-0">Insights and statistics across all your trips.</p>
+    </div>
+    <div>
+        <button class="btn btn-outline-primary rounded-pill px-4 fw-bold shadow-sm">
+            <i class="fa-solid fa-download me-2"></i> Export Report
+        </button>
+    </div>
+</div>
+
+<!-- KPI Cards -->
+<div class="row g-4 mb-4">
+    <!-- Total Trips -->
+    <div class="col-md-4">
+        <div class="card border-0 shadow-sm p-4 h-100" style="border-radius: var(--border-radius);">
+            <div class="d-flex align-items-center mb-3">
+                <div class="bg-primary bg-opacity-10 text-primary rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 48px; height: 48px;">
+                    <i class="fa-solid fa-suitcase-rolling fs-5"></i>
+                </div>
+                <div>
+                    <h6 class="text-muted text-uppercase tracking-wider small fw-bold mb-0">Total Trips</h6>
+                    <h3 class="fw-bold text-dark mb-0">{{ total_trips }}</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Countries Visited -->
+    <div class="col-md-4">
+        <div class="card border-0 shadow-sm p-4 h-100" style="border-radius: var(--border-radius);">
+            <div class="d-flex align-items-center mb-3">
+                <div class="bg-success bg-opacity-10 text-success rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 48px; height: 48px;">
+                    <i class="fa-solid fa-earth-americas fs-5"></i>
+                </div>
+                <div>
+                    <h6 class="text-muted text-uppercase tracking-wider small fw-bold mb-0">Countries Visited</h6>
+                    <h3 class="fw-bold text-dark mb-0">{{ total_countries }}</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Total Expense -->
+    <div class="col-md-4">
+        <div class="card border-0 shadow-sm p-4 h-100" style="border-radius: var(--border-radius);">
+            <div class="d-flex align-items-center mb-3">
+                <div class="bg-danger bg-opacity-10 text-danger rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 48px; height: 48px;">
+                    <i class="fa-solid fa-wallet fs-5"></i>
+                </div>
+                <div>
+                    <h6 class="text-muted text-uppercase tracking-wider small fw-bold mb-0">Total Spent</h6>
+                    <h3 class="fw-bold text-dark mb-0">₹{{ "%.2f"|format(total_expense) }}</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Charts Section -->
+<div class="row g-4">
+    <!-- Expense Breakdown Chart -->
+    <div class="col-lg-6">
+        <div class="card border-0 shadow-sm p-4 h-100" style="border-radius: var(--border-radius);">
+            <h5 class="fw-bold mb-4">Total Spending by Category</h5>
+            {% if total_expense > 0 %}
+            <div style="height: 300px; position: relative;">
+                <canvas id="categoryExpenseChart"></canvas>
+            </div>
+            {% else %}
+            <div class="text-center py-5 h-100 d-flex flex-column justify-content-center">
+                <i class="fa-solid fa-chart-pie fs-1 text-muted mb-3 opacity-25"></i>
+                <p class="text-muted fw-medium">No financial data yet.</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    
+    <!-- Trips per Month Chart -->
+    <div class="col-lg-6">
+        <div class="card border-0 shadow-sm p-4 h-100" style="border-radius: var(--border-radius);">
+            <h5 class="fw-bold mb-4">Trips per Month</h5>
+            {% if total_trips > 0 %}
+            <div style="height: 300px; position: relative;">
+                <canvas id="tripsMonthChart"></canvas>
+            </div>
+            {% else %}
+            <div class="text-center py-5 h-100 d-flex flex-column justify-content-center">
+                <i class="fa-solid fa-chart-bar fs-1 text-muted mb-3 opacity-25"></i>
+                <p class="text-muted fw-medium">No trip data yet.</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Hidden data for JS charts -->
+<div id="chartData" 
+     data-cat-labels='{{ cat_labels|tojson|safe }}'
+     data-cat-data='{{ cat_data|tojson|safe }}'
+     data-month-labels='{{ month_labels|tojson|safe }}'
+     data-month-data='{{ month_data|tojson|safe }}'>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const dataContainer = document.getElementById('chartData');
+        
+        // 1. Category Expense Doughnut Chart
+        const catLabels = JSON.parse(dataContainer.dataset.catLabels);
+        const catData = JSON.parse(dataContainer.dataset.catData);
+        
+        if (catData.length > 0 && document.getElementById('categoryExpenseChart')) {
+            const ctxCat = document.getElementById('categoryExpenseChart').getContext('2d');
+            new Chart(ctxCat, {
+                type: 'doughnut',
+                data: {
+                    labels: catLabels,
+                    datasets: [{
+                        data: catData,
+                        backgroundColor: [
+                            '#5B4CF0', '#10B981', '#F59E0B', '#EF4444', '#6B7280', '#3B82F6'
+                        ],
+                        borderWidth: 0,
+                        hoverOffset: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'right' }
+                    }
+                }
+            });
+        }
+        
+        // 2. Trips Per Month Bar Chart
+        const monthLabels = JSON.parse(dataContainer.dataset.monthLabels);
+        const monthData = JSON.parse(dataContainer.dataset.monthData);
+        
+        if (monthData.length > 0 && document.getElementById('tripsMonthChart')) {
+            const ctxMonth = document.getElementById('tripsMonthChart').getContext('2d');
+            new Chart(ctxMonth, {
+                type: 'bar',
+                data: {
+                    labels: monthLabels,
+                    datasets: [{
+                        label: 'Trips',
+                        data: monthData,
+                        backgroundColor: '#5B4CF0',
+                        borderRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: { stepSize: 1 }
+                        }
+                    },
+                    plugins: {
+                        legend: { display: false }
+                    }
+                }
+            });
+        }
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,231 @@
+{% extends "base.html" %}
+{% block title %}Budget - {{ trip.name }}{% endblock %}
+
+{% block extra_css %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+{% endblock %}
+
+{% block content %}
+<div class="mb-4">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{ url_for('trips.view_trip', trip_id=trip.id) }}" class="text-decoration-none text-muted">{{ trip.name }}</a></li>
+            <li class="breadcrumb-item active text-dark fw-medium" aria-current="page">Finance Tracking</li>
+        </ol>
+    </nav>
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <h2 class="fw-bold text-dark mb-0">Finance Tracking</h2>
+            <p class="text-muted mb-0">Monitor estimated budgets vs. actual spending in real-time.</p>
+        </div>
+        <button class="btn btn-primary rounded-pill px-4 shadow-sm fw-bold" data-bs-toggle="modal" data-bs-target="#addBudgetModal">
+            <i class="fa-solid fa-plus me-2"></i> Log Expense
+        </button>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- Charts Column -->
+    <div class="col-lg-4">
+        <div class="card border-0 shadow-sm p-4 h-100" style="border-radius: var(--border-radius);">
+            <h5 class="fw-bold mb-4">Spend Breakdown</h5>
+            {% if trip.budgets %}
+                <div class="position-relative mx-auto mb-4" style="height: 220px; width: 220px;">
+                    <canvas id="budgetChart"></canvas>
+                </div>
+                <div class="mt-4">
+                    <div class="d-flex justify-content-between mb-2">
+                        <span class="text-muted fw-medium small">Total Est.</span>
+                        <span class="fw-bold text-dark">₹{{ "%.2f"|format(trip.budgets|sum(attribute='estimated_cost')) }}</span>
+                    </div>
+                    <div class="d-flex justify-content-between">
+                        <span class="text-muted fw-medium small">Total Act.</span>
+                        <span class="fw-bold text-primary">₹{{ "%.2f"|format(trip.budgets|sum(attribute='actual_cost')) }}</span>
+                    </div>
+                </div>
+            {% else %}
+                <div class="text-center py-5 h-100 d-flex flex-column justify-content-center">
+                    <i class="fa-solid fa-chart-pie fs-1 text-muted mb-3 opacity-25"></i>
+                    <p class="text-muted fw-medium">No financial data yet.<br>Add expenses to generate insights.</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Table Column -->
+    <div class="col-lg-8">
+        <div class="card border-0 shadow-sm p-4 h-100" style="border-radius: var(--border-radius);">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h5 class="fw-bold mb-0">Expense Ledger</h5>
+                <button class="btn btn-light btn-sm fw-medium rounded-pill"><i class="fa-solid fa-download me-1"></i> Export CSV</button>
+            </div>
+            
+            {% if trip.budgets %}
+                <div class="table-responsive">
+                    <table class="table align-middle table-hover">
+                        <thead class="table-light">
+                            <tr>
+                                <th class="text-muted text-uppercase tracking-wider small fw-bold border-0 rounded-start">Category</th>
+                                <th class="text-muted text-uppercase tracking-wider small fw-bold border-0 text-end">Estimated</th>
+                                <th class="text-muted text-uppercase tracking-wider small fw-bold border-0 text-end">Actual</th>
+                                <th class="text-muted text-uppercase tracking-wider small fw-bold border-0 text-end rounded-end">Variance</th>
+                            </tr>
+                        </thead>
+                        <tbody class="border-top-0">
+                            {% for budget in trip.budgets %}
+                            <tr>
+                                <td class="border-bottom-0 py-3">
+                                    <span class="badge badge-soft-primary px-3 py-2 rounded-pill fw-medium d-inline-flex align-items-center gap-2">
+                                        {% if budget.category == 'Stay' %}<i class="fa-solid fa-bed"></i>
+                                        {% elif budget.category == 'Transport' %}<i class="fa-solid fa-plane"></i>
+                                        {% elif budget.category == 'Food' %}<i class="fa-solid fa-utensils"></i>
+                                        {% elif budget.category == 'Activities' %}<i class="fa-solid fa-ticket"></i>
+                                        {% else %}<i class="fa-solid fa-receipt"></i>{% endif %}
+                                        {{ budget.category }}
+                                    </span>
+                                </td>
+                                <td class="text-end border-bottom-0 fw-medium text-muted">₹{{ "%.2f"|format(budget.estimated_cost) }}</td>
+                                <td class="text-end border-bottom-0 fw-bold text-dark">₹{{ "%.2f"|format(budget.actual_cost) }}</td>
+                                <td class="text-end border-bottom-0">
+                                    {% set diff = budget.estimated_cost - budget.actual_cost %}
+                                    <span class="badge bg-{{ 'success' if diff >= 0 else 'danger' }} bg-opacity-10 text-{{ 'success' if diff >= 0 else 'danger' }} px-2 py-1 rounded-pill">
+                                        {{ "+" if diff >= 0 else "" }}₹{{ "%.2f"|format(diff) }}
+                                    </span>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="text-center py-5 border-dashed rounded-3 bg-light">
+                    <p class="text-muted mb-0">The ledger is currently empty.</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Add Budget Modal -->
+<div class="modal fade" id="addBudgetModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-0 shadow-lg" style="border-radius: var(--border-radius);">
+      <div class="modal-header border-bottom-0 pb-0 pt-4 px-4">
+        <h4 class="modal-title fw-bold">Log New Expense</h4>
+        <button type="button" class="btn-close shadow-none" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body p-4">
+        <form id="addBudgetForm">
+            <div class="mb-4">
+                <label class="form-label fw-bold text-dark">Category</label>
+                <select class="form-select bg-light" id="budgetCategory" required>
+                    <option value="Stay">🏨 Stay / Accommodation</option>
+                    <option value="Transport">✈️ Transport / Flights</option>
+                    <option value="Food">🍽️ Food & Dining</option>
+                    <option value="Activities">🎟️ Activities & Tours</option>
+                    <option value="Other">🧾 Other Expenses</option>
+                </select>
+            </div>
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label class="form-label fw-bold text-dark">Estimated Cost (₹)</label>
+                    <input type="number" step="0.01" class="form-control bg-light" id="budgetEst" required placeholder="0.00">
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label fw-bold text-dark">Actual Cost (₹)</label>
+                    <input type="number" step="0.01" class="form-control bg-light" id="budgetAct" placeholder="0.00">
+                    <div class="form-text">Leave blank if unpaid.</div>
+                </div>
+            </div>
+        </form>
+      </div>
+      <div class="modal-footer border-top-0 pt-0 pb-4 px-4 d-flex justify-content-between">
+        <button type="button" class="btn btn-light rounded-pill px-4 fw-medium text-muted" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-primary rounded-pill px-4 fw-bold shadow-sm" onclick="submitBudget()">Save Record <i class="fa-solid fa-check ms-1"></i></button>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{% if trip.budgets %}
+<div id="budgetDataContainer" style="display: none;">
+    {% for budget in trip.budgets %}
+    <div class="budget-data-item" data-category="{{ budget.category }}" data-amount="{{ budget.actual_cost or budget.estimated_cost }}"></div>
+    {% endfor %}
+</div>
+
+<script>
+    const ctx = document.getElementById('budgetChart').getContext('2d');
+    
+    const labels = [];
+    const actualData = [];
+    
+    document.querySelectorAll('.budget-data-item').forEach(el => {
+        labels.push(el.dataset.category);
+        actualData.push(parseFloat(el.dataset.amount));
+    });
+    
+    new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: labels,
+            datasets: [{
+                data: actualData,
+                backgroundColor: [
+                    '#5B4CF0', '#10B981', '#F59E0B', '#EF4444', '#6B7280'
+                ],
+                borderWidth: 0,
+                hoverOffset: 4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            cutout: '75%',
+            plugins: {
+                legend: { display: false }
+            }
+        }
+    });
+</script>
+{% endif %}
+<script>
+async function submitBudget() {
+    const btn = event.target;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span> Saving...';
+    btn.disabled = true;
+
+    const data = {
+        category: document.getElementById('budgetCategory').value.replace(/[^\w\s&]/gi, '').trim(), // Remove emojis from backend logic
+        estimated_cost: document.getElementById('budgetEst').value,
+        actual_cost: document.getElementById('budgetAct').value || 0
+    };
+    
+    if(!data.estimated_cost) {
+        alert("Please enter estimated cost");
+        btn.innerHTML = 'Save Record <i class="fa-solid fa-check ms-1"></i>';
+        btn.disabled = false;
+        return;
+    }
+
+    try {
+        const response = await fetch(`/trips/api/{{ trip.id }}/budget`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(data)
+        });
+        
+        if (response.ok) {
+            window.location.reload();
+        } else {
+            alert("Error adding budget");
+        }
+    } catch (e) {
+        console.error(e);
+        alert("Error adding budget");
+    }
+}
+</script>
+{% endblock %}

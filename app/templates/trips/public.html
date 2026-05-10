@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ trip.name }} - Traveloop Public Itinerary</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #5B4CF0;
+            --primary-dark: #4335C7;
+            --bg-color: #F8F9FA;
+            --text-color: #1F2937;
+            --text-muted: #6B7280;
+            --border-radius: 20px;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            -webkit-font-smoothing: antialiased;
+        }
+        .hero-section {
+            height: 60vh;
+            background: linear-gradient(to bottom, rgba(17, 24, 39, 0.4), rgba(17, 24, 39, 0.9)), url('https://images.unsplash.com/photo-1436491865332-7a61a109cc05?auto=format&fit=crop&w=1920&q=80') center/cover;
+            display: flex;
+            align-items: flex-end;
+            padding-bottom: 4rem;
+        }
+        .stop-card {
+            background: white;
+            border-radius: var(--border-radius);
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+            border: 1px solid rgba(0,0,0,0.05);
+            transition: transform 0.2s;
+        }
+        .stop-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+        .activity-pill {
+            background: rgba(91, 76, 240, 0.08);
+            color: var(--primary);
+            padding: 0.5rem 1rem;
+            border-radius: 50rem;
+            font-size: 0.875rem;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin: 0.25rem;
+        }
+        .topbar {
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            padding: 1.5rem 0;
+            z-index: 10;
+        }
+    </style>
+</head>
+<body>
+
+<div class="topbar">
+    <div class="container d-flex justify-content-between align-items-center text-white">
+        <a href="/" class="text-white text-decoration-none fw-bold fs-4 d-flex align-items-center gap-2">
+            <i class="fa-solid fa-plane-departure"></i> Traveloop
+        </a>
+        <div>
+            <button class="btn btn-light rounded-pill px-4 fw-bold shadow-sm" onclick="copyLink()">
+                <i class="fa-regular fa-copy me-2"></i> Copy Link
+            </button>
+            <a href="/" class="btn btn-primary rounded-pill px-4 fw-bold shadow-sm ms-2">
+                Build Your Own
+            </a>
+        </div>
+    </div>
+</div>
+
+<div class="hero-section text-white">
+    <div class="container text-center">
+        <span class="badge bg-white text-dark px-4 py-2 rounded-pill fw-bold mb-4 shadow-sm text-uppercase tracking-wider">Public Itinerary</span>
+        <h1 class="display-3 fw-bold mb-3">{{ trip.name }}</h1>
+        <p class="fs-4 opacity-75 mb-4 max-w-2xl mx-auto">{{ trip.description or "A carefully curated multi-city journey." }}</p>
+        <div class="d-flex justify-content-center gap-4 fw-medium">
+            <span><i class="fa-regular fa-calendar me-2"></i>{{ trip.start_date.strftime('%b %d') }} - {{ trip.end_date.strftime('%b %d, %Y') }}</span>
+            <span><i class="fa-solid fa-location-dot me-2"></i>{{ trip.stops|length }} Destinations</span>
+        </div>
+    </div>
+</div>
+
+<div class="container" style="margin-top: -3rem; position: relative; z-index: 5;">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            {% if trip.stops %}
+                {% for stop in trip.stops %}
+                <div class="stop-card">
+                    <div class="d-flex justify-content-between align-items-center mb-4 border-bottom pb-3">
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center fw-bold fs-5 shadow-sm" style="width: 48px; height: 48px;">
+                                {{ loop.index }}
+                            </div>
+                            <div>
+                                <h3 class="fw-bold mb-0 text-dark">{{ stop.city }}</h3>
+                                <p class="text-muted fw-medium mb-0"><i class="fa-solid fa-earth-americas me-1 text-primary opacity-75"></i> {{ stop.country }}</p>
+                            </div>
+                        </div>
+                        <div class="text-end">
+                            <span class="d-block fw-bold text-dark">{{ stop.start_date.strftime('%b %d') }} - {{ stop.end_date.strftime('%b %d') }}</span>
+                            <span class="badge bg-light text-dark border px-3 py-1 rounded-pill mt-2">{{ (stop.end_date - stop.start_date).days }} Days</span>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <h6 class="text-uppercase tracking-wider fw-bold text-muted mb-3 fs-6">Planned Activities</h6>
+                        {% if stop.activities %}
+                            <div>
+                            {% for activity in stop.activities %}
+                                <span class="activity-pill">
+                                    {% if activity.category == 'Food' %}<i class="fa-solid fa-utensils"></i>
+                                    {% elif activity.category == 'Adventure' %}<i class="fa-solid fa-person-hiking"></i>
+                                    {% elif activity.category == 'Sightseeing' %}<i class="fa-solid fa-camera"></i>
+                                    {% else %}<i class="fa-solid fa-star"></i>{% endif %}
+                                    {{ activity.title }}
+                                </span>
+                            {% endfor %}
+                            </div>
+                        {% else %}
+                            <p class="text-muted small"><i class="fa-solid fa-circle-info me-1"></i> No activities planned yet for this destination.</p>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+                
+                <div class="text-center py-5">
+                    <div class="bg-primary text-white rounded-circle d-inline-flex align-items-center justify-content-center shadow-sm mb-3" style="width: 64px; height: 64px;">
+                        <i class="fa-solid fa-flag-checkered fs-3"></i>
+                    </div>
+                    <h4 class="fw-bold text-dark">Journey Complete</h4>
+                    <p class="text-muted">Like what you see? Build your own trip with Traveloop.</p>
+                    <a href="/" class="btn btn-primary rounded-pill px-5 py-3 fw-bold shadow-sm mt-2">Start Planning Now</a>
+                </div>
+            {% else %}
+                <div class="stop-card text-center py-5">
+                    <h4 class="fw-bold text-dark mb-3">Trip Still in Planning Phase</h4>
+                    <p class="text-muted mb-0">The owner of this itinerary hasn't added any destinations yet. Check back later!</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<footer class="bg-white py-4 mt-5 border-top text-center text-muted small">
+    <div class="container">
+        &copy; 2026 Traveloop. Powered by intelligent travel planning.
+    </div>
+</footer>
+
+<script>
+function copyLink() {
+    navigator.clipboard.writeText(window.location.href).then(() => {
+        alert("Public link copied to clipboard!");
+    });
+}
+</script>
+</body>
+</html>
