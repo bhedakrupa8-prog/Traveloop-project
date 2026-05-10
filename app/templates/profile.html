@@ -36,11 +36,11 @@
     <div class="col-lg-8">
         <div class="card border-0 shadow-sm p-4 mb-4" style="border-radius: var(--border-radius);">
             <h5 class="fw-bold text-dark mb-4">Personal Information</h5>
-            <form action="{{ url_for('main.profile') }}" method="POST">
+            <form>
                 <div class="row g-4 mb-4">
                     <div class="col-md-6">
                         <label class="form-label fw-bold text-dark small text-uppercase tracking-wider">Full Name</label>
-                        <input type="text" name="username" class="form-control bg-light" value="{{ user.username }}">
+                        <input type="text" class="form-control bg-light" value="{{ user.username }}">
                     </div>
                     <div class="col-md-6">
                         <label class="form-label fw-bold text-dark small text-uppercase tracking-wider">Email Address</label>
@@ -49,19 +49,19 @@
                     </div>
                     <div class="col-md-6">
                         <label class="form-label fw-bold text-dark small text-uppercase tracking-wider">Role</label>
-                        <input type="text" class="form-control bg-light" value="{% if user.is_admin %}Admin{% else %}Workspace Owner{% endif %}" readonly disabled>
+                        <input type="text" class="form-control bg-light" value="Workspace Owner" readonly disabled>
                     </div>
                     <div class="col-md-6">
-                        <label class="form-label fw-bold text-dark small text-uppercase tracking-wider">Language Preference</label>
-                        <select name="language" class="form-select bg-light">
-                            <option value="en" {% if user.language_preference == 'en' %}selected{% endif %}>English (US)</option>
-                            <option value="es" {% if user.language_preference == 'es' %}selected{% endif %}>Español</option>
-                            <option value="fr" {% if user.language_preference == 'fr' %}selected{% endif %}>Français</option>
+                        <label class="form-label fw-bold text-dark small text-uppercase tracking-wider">Timezone</label>
+                        <select class="form-select bg-light">
+                            <option>UTC-05:00 Eastern Time (US & Canada)</option>
+                            <option>UTC+00:00 London</option>
+                            <option>UTC+01:00 Paris</option>
                         </select>
                     </div>
                 </div>
                 <div class="d-flex justify-content-end">
-                    <button type="submit" class="btn btn-primary rounded-pill px-4 shadow-sm fw-bold">Save Changes</button>
+                    <button type="button" class="btn btn-primary rounded-pill px-4 shadow-sm fw-bold">Save Changes</button>
                 </div>
             </form>
         </div>
@@ -73,9 +73,7 @@
                     <h6 class="fw-bold text-danger mb-1">Delete Workspace & Account</h6>
                     <p class="text-danger opacity-75 small mb-0">Once you delete your account, there is no going back. Please be certain.</p>
                 </div>
-                <form action="{{ url_for('main.delete_account') }}" method="POST" onsubmit="return confirm('Are you sure you want to delete your account? This cannot be undone.');">
-                    <button type="submit" class="btn btn-danger rounded-pill fw-bold shadow-sm px-4">Delete Account</button>
-                </form>
+                <button class="btn btn-danger rounded-pill fw-bold shadow-sm px-4">Delete Account</button>
             </div>
         </div>
     </div>
